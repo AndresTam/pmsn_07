@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pmsn_07/firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:pmsn_07/screens/singup_screen.dart';
 import 'package:pmsn_07/screens/splash_screen.dart';
 import 'package:pmsn_07/screens/dashboard_screen.dart';
 
@@ -22,6 +23,7 @@ class MyApp extends StatelessWidget {
       home: const SplashScreen(),
       routes: {
         "/dash": (BuildContext context) => const DashboardScreen(),
+        "/singup": (BuildContext context) => const SingupScreen(),
       },
     );
   }
