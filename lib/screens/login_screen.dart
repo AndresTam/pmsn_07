@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:pmsn_07/services/auth_service.dart';
 import 'package:pmsn_07/util/snackbar.dart';
+import 'package:pmsn_07/services/auth_service.dart';
 
-class SingupScreen extends StatelessWidget {
-  const SingupScreen({super.key});
+class LoginScreen extends StatelessWidget {
+  const LoginScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     final AuthService auth = AuthService();
     final GlobalKey<FormState> validationForm = GlobalKey<FormState>();
-    RegExp emailVal = RegExp(r'^[0-9]{8}@itcelaya\.edu\.mx$');
-    RegExp passwordVal = RegExp(r'^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#\$&*~]).{8,16}$');
 
     final TextEditingController emailController = TextEditingController();
     final TextEditingController passwordController = TextEditingController();
@@ -28,8 +26,6 @@ class SingupScreen extends StatelessWidget {
       validator: (value) {
         if(value != null && value.isEmpty){
           return "Ingresa un correo";
-        } else if(!emailVal.hasMatch(value!)){
-          return "El correo no es valido";
         }
         return null;
       },
@@ -49,8 +45,6 @@ class SingupScreen extends StatelessWidget {
       validator: (value) {
         if (value != null && value.isEmpty) {
           return 'Ingresa una contraseña';
-        } else if(!passwordVal.hasMatch(value!)) {
-          return "La contraseña debe tener:\n-8 a 16 caracteres\n-Iniciar con mayuscula\n-Contener numeros\n-Contener caracteres especiales";
         }
         return null;
       },
@@ -61,7 +55,7 @@ class SingupScreen extends StatelessWidget {
         backgroundColor: const Color.fromRGBO(88, 104, 117, 1),
       ),
       child: const Text(
-        'Registrarse',
+        'Iniciar Sesión',
         style: TextStyle(
           color: Colors.white,
           fontSize: 20
@@ -72,16 +66,14 @@ class SingupScreen extends StatelessWidget {
           Future(() => showDialog(
             context: context, 
             builder: (BuildContext context) => const AlertDialog(
-              title: Text("No se pudo registrar"),
-              content: Text("Algunos datos son incorrectos, por favor verificalos antes de continuar"),
+              title: Text("No se pudo iniciar sesión"),
+              content: Text("Debes llenar todos los campos"),
           ))
           );
         } else{
-          var result = await auth.createAcount(emailController.text, passwordController.text);
-          if(result == 1){
-            showSnackBar(context, 'Contraseña demasiad debil');
-          } else if(result == 2){
-            showSnackBar(context, 'Este email ya se encuentra registrado');
+          var result = await auth.singinEmailAndPassword(emailController.text, passwordController.text);
+          if(result == 1 || result == 2){
+            showSnackBar(context, 'Correo o contraseña incorrectos');
           } else if(result != null){
             Navigator.pushNamed(context, "/dash");
           }
@@ -125,7 +117,7 @@ class SingupScreen extends StatelessWidget {
                       child: Column(
                         children: [
                           const Text(
-                            'Registro',
+                            'Iniciar Sesión',
                             style: TextStyle(
                               color: Color.fromRGBO(88, 104, 117, 1),
                               fontSize: 30,
@@ -145,6 +137,18 @@ class SingupScreen extends StatelessWidget {
                           ),
                         ],
                       ),
+                    ),
+                    const SizedBox(height: 20.0),
+                    GestureDetector(
+                      child: const Text(
+                        '¿No tienes cuenta? Registrate aquí.',
+                        style: TextStyle(
+                          color: Colors.white,
+                        ),
+                      ),
+                      onTap: () {
+                        Navigator.pushNamed(context, "/singup");
+                      },
                     ),
                   ],
                 ),
