@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -15,7 +16,12 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     super.initState();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
     Future.delayed(const Duration(seconds: 3), () {
-      Navigator.pushNamed(context, "/login");
+      final user = FirebaseAuth.instance.currentUser;
+      if(user != null){
+        Navigator.pushNamed(context, "/dash");
+      } else{
+        Navigator.pushNamed(context, "/login");
+      }
     });
   }
 

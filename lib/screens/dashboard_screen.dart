@@ -14,19 +14,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final FirestoreChats _firestoreChats = FirestoreChats();
   final FirestoreUser _firestoreUser = FirestoreUser();
   final String auth = FirebaseAuth.instance.currentUser!.uid;
-  
-  final List<Map<String, dynamic>> _chats = [
-    {'name': 'John', 'lastMessage': 'Hello!', 'time': '10:00 AM'},
-    {'name': 'Jane', 'lastMessage': 'Hi there!', 'time': '11:30 AM'},
-    {'name': 'Alice', 'lastMessage': 'Hey!', 'time': 'Yesterday'},
-    {'name': 'Bob', 'lastMessage': 'What\'s up?', 'time': 'Yesterday'},
-  ];
 
   @override
   Widget build(BuildContext context) {
     bool shouldIncludeChat(Map<String, dynamic> chat, String targetChatID) {
-      // Aquí define tu lógica de comparación para decidir si incluir el chat
-      return chat['chatID'].contains(targetChatID); // Ejemplo de comparación, ajusta según tu lógica
+      return chat['chatID'].contains(targetChatID);
     }
 
     return Scaffold(
@@ -100,6 +92,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               // ),
                               onTap: () {
                                 // Aquí puedes manejar la navegación al chat específico
+                                Navigator.pushNamed(
+                                  context,
+                                  "/messages",
+                                  arguments: {
+                                    'chatID': chat['chatID'],
+                                    'userID': auth,
+                                    'name': userData['name']
+                                  }
+                                );
                               },
                             ),
                             _buildCustomDivider(),

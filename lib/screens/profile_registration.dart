@@ -4,7 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:pmsn_07/services/firestore_user.dart';
 import 'package:pmsn_07/services/storage_service.dart';
-import 'package:pmsn_07/util/select_image.dart';
+import 'package:pmsn_07/util/select_file.dart';
 import 'package:pmsn_07/util/snackbar.dart';
 
 class ProfileRegistration extends StatefulWidget {

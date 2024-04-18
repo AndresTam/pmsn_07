@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pmsn_07/firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:pmsn_07/screens/login_screen.dart';
+import 'package:pmsn_07/screens/messages_screen.dart';
 import 'package:pmsn_07/screens/profile_registration.dart';
 import 'package:pmsn_07/screens/singup_screen.dart';
 import 'package:pmsn_07/screens/splash_screen.dart';
@@ -24,10 +25,11 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       home: const SplashScreen(),
       routes: {
-        "/dash": (BuildContext context) => DashboardScreen(),
+        "/dash": (BuildContext context) => const DashboardScreen(),
         "/login": (BuildContext context) => const LoginScreen(),
         "/singup": (BuildContext context) => const SingupScreen(),
-        "/profileRegistration": (BuildContext context) => ProfileRegistration(),
+        "/profileRegistration": (BuildContext context) => const ProfileRegistration(),
+        "/messages": (BuildContext context) => const MessagesScreen(),
       },
     );
   }

@@ -25,3 +25,31 @@ Future<String> uploadProfileImage(File image, String file, String name) async {
 
   return url;
 }
+
+Future<String> uploadChatImage(File image, String file, String chatId, String name) async {
+  final Reference ref = storage.ref().child(file).child(chatId).child('image').child(name);
+  try{
+    await ref.putFile(image);
+    value = true;
+  } on FirebaseException catch(e){
+    print(e);
+  }
+
+  final String url = await ref.getDownloadURL();
+
+  return url;
+}
+
+Future<String> uploadChatVideo(File image, String file, String chatId, String name) async {
+  final Reference ref = storage.ref().child(file).child(chatId).child('video').child(name);
+  try{
+    await ref.putFile(image);
+    value = true;
+  } on FirebaseException catch(e){
+    print(e);
+  }
+
+  final String url = await ref.getDownloadURL();
+
+  return url;
+}
