@@ -77,12 +77,6 @@ class LoginScreen extends StatelessWidget {
           } else if(result != null){
             Navigator.pushNamed(context, "/dash");
           }
-          // Future.delayed(
-          //   new Duration(milliseconds: 2000),
-          //   (){
-          //     Navigator.pushNamed(context, "/dash").then((value){});
-          //   }
-          // );
         }
       },
     );
