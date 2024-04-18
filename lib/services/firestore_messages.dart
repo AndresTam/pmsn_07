@@ -35,4 +35,14 @@ class FirestoreMessage{
       return [];
     }
   }
+
+  //Stream to update messages screen
+  Stream<List<Map<String, dynamic>>> getMessagesStream(String chatID) {
+  return FirebaseFirestore.instance
+      .collection('messages')
+      .where('chatID', isEqualTo: chatID)
+      .orderBy('date', descending: true)
+      .snapshots()
+      .map((snapshot) => snapshot.docs.map((doc) => doc.data()).toList());
+}
 }
