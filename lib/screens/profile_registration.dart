@@ -27,6 +27,8 @@ class _ProfileRegistrationState extends State<ProfileRegistration> {
 
   @override
   Widget build(BuildContext context) {
+    final Map<String, dynamic>? args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+
     final txtName = Container(
       decoration: BoxDecoration(
         color: const Color.fromRGBO(165, 200, 202, 1),
@@ -197,7 +199,7 @@ class _ProfileRegistrationState extends State<ProfileRegistration> {
           showSnackBar(context, 'Guardando Datos');
           final uploadedImage = await uploadProfileImage(imageToUpload!, 'imgProfile', 'profileImage');
           if(uploadedImage.isNotEmpty){
-            firestoreUser.createUser(auth.currentUser!.uid, nameController.text, careerController.text, positionController.text, sentenceController.text, uploadedImage);
+            firestoreUser.createUser(auth.currentUser!.uid, nameController.text, args?['email'], careerController.text, positionController.text, sentenceController.text, uploadedImage);
             showSnackBar(context, 'Datos Guardados');
             Navigator.pushNamed(context, "/dash");
           } else{

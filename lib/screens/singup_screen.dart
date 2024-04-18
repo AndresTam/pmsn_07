@@ -83,7 +83,7 @@ class SingupScreen extends StatelessWidget {
           } else if(result == 2){
             showSnackBar(context, 'Este email ya se encuentra registrado');
           } else if(result != null){
-            Navigator.pushNamed(context, "/profileRegistration");
+            Navigator.pushNamed(context, "/profileRegistration", arguments: {'email': emailController.text});
           }
         }
       },

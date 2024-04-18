@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:pmsn_07/services/firestore_chats.dart';
 import 'package:pmsn_07/services/firestore_user.dart';
+import 'package:pmsn_07/util/snackbar.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -14,6 +15,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final FirestoreChats _firestoreChats = FirestoreChats();
   final FirestoreUser _firestoreUser = FirestoreUser();
   final String auth = FirebaseAuth.instance.currentUser!.uid;
+  final TextEditingController emailController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -26,6 +28,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
         title: const Text('Chats', style: TextStyle(color: Color.fromRGBO(246, 237, 220, 1)),),
         backgroundColor: const Color.fromRGBO(88, 104, 117, 1),
         centerTitle: true,
+        actions: [
+        IconButton(
+          icon: const Icon(Icons.add, color: Color.fromRGBO(246, 237, 220, 1),), // Icono de suma (+)
+          onPressed: () {
+            _showNewChatBottomSheet(context);
+          },
+        ),
+      ],
       ),
       body: Container(
         decoration: const BoxDecoration(
@@ -135,7 +145,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 color: Color.fromRGBO(246, 237, 220, 1),
               ),
               onPressed: () {
-                // Implementar acción de chats
+                Navigator.pushNamed(context, "/dash");
               },
             ),
             IconButton(
@@ -160,22 +170,70 @@ class _DashboardScreenState extends State<DashboardScreen> {
       color: const Color.fromRGBO(227, 229, 215, 1), // Color de la línea del borde
     );
   }
+
+  void _showNewChatBottomSheet(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true, // Hacer que el BottomSheet ocupe toda la pantalla
+      builder: (BuildContext context) {
+        // Obtiene la altura total de la pantalla
+        final screenHeight = MediaQuery.of(context).size.height;
+
+        // Establece una altura fija para el BottomSheet
+        final bottomSheetHeight = screenHeight * 0.8; // Ejemplo: 80% de la pantalla
+
+        return Container(
+          height: bottomSheetHeight,
+          padding: const EdgeInsets.all(16),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'Nuevo Chat',
+                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.black),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                TextField(
+                  controller: emailController,
+                  decoration: InputDecoration(
+                    hintText: 'Introduce el correo electrónico',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () async {
+                    Navigator.of(context).pop();
+                    print(emailController.text);
+                    final String? userId = await _firestoreUser.getUserIdFromEmail(emailController.text);
+                    if(userId != auth && userId != '' && userId != ''){
+                      final String chatId = auth + userId!;
+                      print(chatId);
+                      _firestoreChats.createChat(chatId, auth, userId);
+                    } else if(userId == auth){
+                      showSnackBar(context, 'No puedes enviarte mensajes a ti mismo');
+                    } else{
+                      showSnackBar(context, 'Hubo un error, intentalo de nuevo');
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16), // Ajusta la altura del botón
+                  ),
+                  child: const Text(
+                    'Empezar a chatear',
+                    style: TextStyle(fontSize: 20), // Ajusta el tamaño del texto del botón
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 }
-
-// class ChatScreen extends StatelessWidget {
-//   final String chatName;
-
-//   ChatScreen(this.chatName);
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: Text(chatName),
-//       ),
-//       body: Center(
-//         child: Text('Chat con $chatName'),
-//       ),
-//     );
-//   }
-// }

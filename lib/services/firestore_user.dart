@@ -4,10 +4,12 @@ class FirestoreUser {
   final CollectionReference _userCollection = FirebaseFirestore.instance.collection('users');
 
   //Add user information
-  Future<void> createUser(String userID, String name, String career, String position, String sentence, String imgProfile) async {
+  Future<void> createUser(String userID, String name, String email, String career, String position, String sentence, String imgProfile,) async {
     try{
       await _userCollection.doc(userID).set({
+        'userID': userID,
         'name': name,
+        'email': email,
         'career': career,
         'position': position,
         'sentence': sentence,
@@ -32,6 +34,21 @@ class FirestoreUser {
       }
     } catch (e) {
       print('Error getting users: $e');
+      return null;
+    }
+  }
+
+  //Get user information by email
+  Future<String?> getUserIdFromEmail(String email) async {
+    try{
+      QuerySnapshot querySnapshot = await _userCollection.where('email', isEqualTo: email).get();
+      if(querySnapshot.docs.isNotEmpty){
+        return querySnapshot.docs.first['userID'] as String?;
+      } else{
+        return 'No se encontro el usuario';
+      }
+    } catch(e){
+      print('Error getting user: $e');
       return null;
     }
   }

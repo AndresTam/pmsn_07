@@ -41,16 +41,18 @@ class _MessagesScreenState extends State<MessagesScreen> {
       _firestoreMessage.createMessage(args?['chatID'], messageText, args?['userID'], formattedDateTime, type);
       _messageController.clear();
       FocusScope.of(context).unfocus();
-      _scrollToBottom();
+      _scrollToBottom(0);
     }
   }
 
-  void _scrollToBottom() {
-    _scrollController.animateTo(
-      _scrollController.position.maxScrollExtent,
-      duration: const Duration(milliseconds: 500),
-      curve: Curves.easeOut,
-    );
+  void _scrollToBottom(int length) {
+    if(_scrollController.hasClients){
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeOut,
+      );
+    }
   }
 
   void _playVideo(String videoUrl) async {
@@ -106,9 +108,11 @@ class _MessagesScreenState extends State<MessagesScreen> {
                     final filteredMessagesList = messagesList.where((messages) => shouldIncludeChat(messages, args?['chatID'])).toList();
                     filteredMessagesList.sort((a, b) => a['date'].compareTo(b['date']));
                     if (filteredMessagesList.isNotEmpty) {
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        _scrollToBottom();
-                      });
+                      if(filteredMessagesList.length > 4){
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          _scrollToBottom(filteredMessagesList.length);
+                        });
+                      }
 
                       return ListView.builder(
                         controller: _scrollController,
