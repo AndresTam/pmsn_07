@@ -24,7 +24,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       home: const SplashScreen(),
       routes: {
-        "/dash": (BuildContext context) => const DashboardScreen(),
+        "/dash": (BuildContext context) => DashboardScreen(),
         "/login": (BuildContext context) => const LoginScreen(),
         "/singup": (BuildContext context) => const SingupScreen(),
         "/profileRegistration": (BuildContext context) => ProfileRegistration(),
