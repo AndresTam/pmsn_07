@@ -156,6 +156,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 color: Color.fromRGBO(246, 237, 220, 1),
               ),
               onPressed: () {
+                setState(() {});
                 Navigator.pushNamed(context, "/dash");
               },
             ),

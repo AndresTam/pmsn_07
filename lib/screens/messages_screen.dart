@@ -17,13 +17,18 @@ class MessagesScreen extends StatefulWidget {
 
 class _MessagesScreenState extends State<MessagesScreen> {
   final FirestoreMessage _firestoreMessage = FirestoreMessage();
-  final DateTime now = DateTime.now();
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   VideoPlayerController? _videoPlayerController;
-  Map<String, VideoPlayerController> _videoControllers = {};
-
+  final Map<String, VideoPlayerController> _videoControllers = {};
+  late Stream<List<Map<String, dynamic>>> _messagesStream;
+  //late String? _chatID;
   File? imageToUpload;
+
+  @override
+  void initState() {
+    super.initState();
+  }
 
   @override
   void dispose() {
@@ -39,12 +44,14 @@ class _MessagesScreenState extends State<MessagesScreen> {
   void _sendMessage(
       Map<String, dynamic>? args, String type, String messageText) {
     if (messageText.isNotEmpty) {
+      DateTime now = DateTime.now();
       String formattedDateTime = DateFormat('yyyy-MM-dd HH:mm:ss').format(now);
       _firestoreMessage.createMessage(args?['chatID'], messageText,
           args?['userID'], formattedDateTime, type);
       _messageController.clear();
       FocusScope.of(context).unfocus();
       _scrollToBottom(0);
+      setState(() {});
     }
   }
 
@@ -82,10 +89,11 @@ class _MessagesScreenState extends State<MessagesScreen> {
   Widget build(BuildContext context) {
     final Map<String, dynamic>? args =
         ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    _messagesStream = _firestoreMessage.getMessagesStream(args?['chatID']);
 
-    bool shouldIncludeChat(Map<String, dynamic> messages, String targetChatID) {
-      return messages['chatID'].contains(targetChatID);
-    }
+    // bool shouldIncludeChat(Map<String, dynamic> messages, String targetChatID) {
+    //   return messages['chatID'].contains(targetChatID);
+    // }
 
     return Scaffold(
       appBar: AppBar(
@@ -100,8 +108,8 @@ class _MessagesScreenState extends State<MessagesScreen> {
         child: Column(
           children: [
             Expanded(
-              child: FutureBuilder<List<Map<String, dynamic>>>(
-                future: _firestoreMessage.getMessages(),
+              child: StreamBuilder<List<Map<String, dynamic>>>(
+                stream: _messagesStream,
                 builder: (BuildContext context,
                     AsyncSnapshot<List<Map<String, dynamic>>> snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
@@ -109,35 +117,23 @@ class _MessagesScreenState extends State<MessagesScreen> {
                   } else if (snapshot.hasError) {
                     return Center(child: Text('Error: ${snapshot.error}'));
                   } else {
-                    final messagesList = snapshot.data ?? [];
-                    final filteredMessagesList = messagesList
-                        .where((messages) =>
-                            shouldIncludeChat(messages, args?['chatID']))
-                        .toList();
-                    filteredMessagesList
-                        .sort((a, b) => a['date'].compareTo(b['date']));
-                    if (filteredMessagesList.isNotEmpty) {
-                      if (filteredMessagesList.length > 4) {
-                        WidgetsBinding.instance.addPostFrameCallback((_) {
-                          _scrollToBottom(filteredMessagesList.length);
-                        });
-                      }
-
-                      return ListView.builder(
-                        controller: _scrollController,
-                        itemCount: filteredMessagesList.length,
-                        itemBuilder: (BuildContext context, int index) {
-                          final message = filteredMessagesList[index];
-                          final isMe = message['sender'] == args?['userID'];
-                          return _buildMessage(
-                              message['message'], isMe, message['type']);
-                        },
-                      );
-                    } else {
-                      return const Center(
-                          child:
-                              Text('Aún no hay mensajes, comienza a chatear!'));
-                    }
+                    List<Map<String, dynamic>> messagesList =
+                        snapshot.data ?? [];
+                    // Ordenar la lista por fecha de manera descendente
+                    messagesList.sort((a, b) => b['date'].compareTo(a['date']));
+                    return ListView.builder(
+                      reverse:
+                          true, // Invertir la lista para que los elementos se muestren en orden descendente
+                      controller:
+                          _scrollController, // Usar un controlador para desplazar automáticamente al final
+                      itemCount: messagesList.length,
+                      itemBuilder: (BuildContext context, int index) {
+                        final message = messagesList[index];
+                        final isMe = message['sender'] == args?['userID'];
+                        return _buildMessage(
+                            message['message'], isMe, message['type']);
+                      },
+                    );
                   }
                 },
               ),
