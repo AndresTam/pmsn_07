@@ -82,11 +82,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ListTile(
                               leading: ClipOval(
                                 child: Image.network(
-                                      userData['imgProfile'],
-                                      width: 43,
-                                      height: 43,
-                                      fit: BoxFit.cover,
-                                    )
+                                  userData['imgProfile'],
+                                  width: 43,
+                                  height: 43,
+                                  fit: BoxFit.cover,
+                                )
                               ),
                               title: Text(
                                 userData['name'],
@@ -145,6 +145,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 color: Color.fromRGBO(246, 237, 220, 1),
               ),
               onPressed: () {
+                setState(() {});
                 Navigator.pushNamed(context, "/dash");
               },
             ),

@@ -19,9 +19,9 @@ class _MessagesScreenState extends State<MessagesScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   VideoPlayerController? _videoPlayerController;
-  Map<String, VideoPlayerController> _videoControllers = {};
+  final Map<String, VideoPlayerController> _videoControllers = {};
   late Stream<List<Map<String, dynamic>>> _messagesStream;
-  late String? _chatID;
+  //late String? _chatID;
   File? imageToUpload;
 
   @override
@@ -87,9 +87,9 @@ class _MessagesScreenState extends State<MessagesScreen> {
     final Map<String, dynamic>? args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
     _messagesStream = _firestoreMessage.getMessagesStream(args?['chatID']);
 
-    bool shouldIncludeChat(Map<String, dynamic> messages, String targetChatID) {
-      return messages['chatID'].contains(targetChatID);
-    }
+    // bool shouldIncludeChat(Map<String, dynamic> messages, String targetChatID) {
+    //   return messages['chatID'].contains(targetChatID);
+    // }
 
     return Scaffold(
       appBar: AppBar(
@@ -108,7 +108,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
               stream: _messagesStream,
               builder: (BuildContext context, AsyncSnapshot<List<Map<String, dynamic>>> snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(child: CircularProgressIndicator());
+                  return const Center(child: CircularProgressIndicator());
                 } else if (snapshot.hasError) {
                   return Center(child: Text('Error: ${snapshot.error}'));
                 } else {
