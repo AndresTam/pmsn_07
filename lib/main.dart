@@ -1,12 +1,14 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:pmsn_07/firebase_options.dart';
-import 'package:firebase_core/firebase_core.dart';
+import 'package:pmsn_07/screens/config_profile_screen.dart';
+import 'package:pmsn_07/screens/dashboard_screen.dart';
 import 'package:pmsn_07/screens/login_screen.dart';
 import 'package:pmsn_07/screens/messages_screen.dart';
 import 'package:pmsn_07/screens/profile_registration.dart';
+import 'package:pmsn_07/screens/settings_screeen.dart';
 import 'package:pmsn_07/screens/singup_screen.dart';
 import 'package:pmsn_07/screens/splash_screen.dart';
-import 'package:pmsn_07/screens/dashboard_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,8 +30,11 @@ class MyApp extends StatelessWidget {
         "/dash": (BuildContext context) => const DashboardScreen(),
         "/login": (BuildContext context) => const LoginScreen(),
         "/singup": (BuildContext context) => const SingupScreen(),
-        "/profileRegistration": (BuildContext context) => const ProfileRegistration(),
+        "/profileRegistration": (BuildContext context) =>
+            const ProfileRegistration(),
         "/messages": (BuildContext context) => const MessagesScreen(),
+        "/settings": (BuildContext context) => const SettingsScreen(),
+        "/profileConfig": (BuildContext context) => const ConfigProfileScreen(),
       },
     );
   }

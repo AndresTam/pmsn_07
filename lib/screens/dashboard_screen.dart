@@ -25,108 +25,119 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Chats', style: TextStyle(color: Color.fromRGBO(246, 237, 220, 1)),),
+        title: const Text(
+          'Chats',
+          style: TextStyle(color: Color.fromRGBO(246, 237, 220, 1)),
+        ),
         backgroundColor: const Color.fromRGBO(88, 104, 117, 1),
         centerTitle: true,
         actions: [
-        IconButton(
-          icon: const Icon(Icons.add, color: Color.fromRGBO(246, 237, 220, 1),), // Icono de suma (+)
-          onPressed: () {
-            _showNewChatBottomSheet(context);
-          },
-        ),
-      ],
+          IconButton(
+            icon: const Icon(
+              Icons.add,
+              color: Color.fromRGBO(246, 237, 220, 1),
+            ), // Icono de suma (+)
+            onPressed: () {
+              _showNewChatBottomSheet(context);
+            },
+          ),
+        ],
       ),
       body: Container(
         decoration: const BoxDecoration(
           color: Color.fromRGBO(88, 104, 117, 1),
         ),
         child: FutureBuilder<List<Map<String, dynamic>>>(
-          future: _firestoreChats.getChats(),
-          builder: (BuildContext context, AsyncSnapshot<List<Map<String, dynamic>>> snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            } else if (snapshot.hasError) {
-              return Center(child: Text('Error: ${snapshot.error}'));
-            } else {
-              final chatsList = snapshot.data ?? [];
-              final targetChatID = auth; // Especifica el chat ID que deseas buscar
+            future: _firestoreChats.getChats(),
+            builder: (BuildContext context,
+                AsyncSnapshot<List<Map<String, dynamic>>> snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              } else if (snapshot.hasError) {
+                return Center(child: Text('Error: ${snapshot.error}'));
+              } else {
+                final chatsList = snapshot.data ?? [];
+                final targetChatID =
+                    auth; // Especifica el chat ID que deseas buscar
 
-              // Filtra la lista para incluir solo los chats que cumplan la condición
-              final filteredChatsList = chatsList.where((chat) => shouldIncludeChat(chat, targetChatID)).toList();
-              return ListView.builder(
-                itemCount: filteredChatsList.length,
-                itemBuilder: (BuildContext context, int index) {
-                  final chat = filteredChatsList[index];
-                  var userID = '';
-                  if(chat['participant1'] == auth){
-                    userID = chat['participant2'];
-                  } else if(chat['participant2'] == auth){
-                    userID = chat['participant1'];
-                  }
-                  return FutureBuilder<Map<String, dynamic>?>(
-                    future: _firestoreUser.getUser(userID),
-                    builder: (BuildContext context, AsyncSnapshot<Map<String, dynamic>?> userSnapshot) {
-                      if (userSnapshot.connectionState == ConnectionState.waiting) {
-                        return const ListTile(
-                          title: Text('Loading...'),
-                        );
-                      } else if (userSnapshot.hasError) {
-                        return const ListTile(
-                          title: Text('Error loading user'),
-                        );
-                      } else {
-                        final userData = userSnapshot.data!;
-                        return Column(
-                          children: [
-                            ListTile(
-                              leading: ClipOval(
-                                child: Image.network(
-                                      userData['imgProfile'],
-                                      width: 43,
-                                      height: 43,
-                                      fit: BoxFit.cover,
-                                    )
+                // Filtra la lista para incluir solo los chats que cumplan la condición
+                final filteredChatsList = chatsList
+                    .where((chat) => shouldIncludeChat(chat, targetChatID))
+                    .toList();
+                return ListView.builder(
+                  itemCount: filteredChatsList.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    final chat = filteredChatsList[index];
+                    var userID = '';
+                    if (chat['participant1'] == auth) {
+                      userID = chat['participant2'];
+                    } else if (chat['participant2'] == auth) {
+                      userID = chat['participant1'];
+                    }
+                    return FutureBuilder<Map<String, dynamic>?>(
+                      future: _firestoreUser.getUser(userID),
+                      builder: (BuildContext context,
+                          AsyncSnapshot<Map<String, dynamic>?> userSnapshot) {
+                        if (userSnapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const ListTile(
+                            title: Text('Loading...'),
+                          );
+                        } else if (userSnapshot.hasError) {
+                          return const ListTile(
+                            title: Text('Error loading user'),
+                          );
+                        } else {
+                          final userData = userSnapshot.data!;
+                          return Column(
+                            children: [
+                              ListTile(
+                                leading: ClipOval(
+                                    child: Image.network(
+                                  userData['imgProfile'],
+                                  width: 43,
+                                  height: 43,
+                                  fit: BoxFit.cover,
+                                )),
+                                title: Text(
+                                  userData['name'],
+                                  style: const TextStyle(
+                                      color: Color.fromRGBO(246, 237, 220, 1)),
+                                ),
+                                // subtitle: Text(
+                                //   chat['lastMessage'],
+                                //   style: const TextStyle(color: Color.fromRGBO(189, 214, 210, 1)),
+                                // ),
+                                // trailing: Text(
+                                //   chat['time'],
+                                //   style: const TextStyle(color: Color.fromRGBO(189, 214, 210, 1)),
+                                // ),
+                                onTap: () {
+                                  print(
+                                      "chatID: ${chat['chatID']} \n userID: ${auth} \n name: ${userData['name']}");
+                                  // Aquí puedes manejar la navegación al chat específico
+                                  Navigator.pushNamed(context, "/messages",
+                                      arguments: {
+                                        'chatID': chat['chatID'],
+                                        'userID': auth,
+                                        'name': userData['name']
+                                      });
+                                },
                               ),
-                              title: Text(
-                                userData['name'],
-                                style: const TextStyle(color: Color.fromRGBO(246, 237, 220, 1)),
-                              ),
-                              // subtitle: Text(
-                              //   chat['lastMessage'],
-                              //   style: const TextStyle(color: Color.fromRGBO(189, 214, 210, 1)),
-                              // ),
-                              // trailing: Text(
-                              //   chat['time'],
-                              //   style: const TextStyle(color: Color.fromRGBO(189, 214, 210, 1)),
-                              // ),
-                              onTap: () {
-                                // Aquí puedes manejar la navegación al chat específico
-                                Navigator.pushNamed(
-                                  context,
-                                  "/messages",
-                                  arguments: {
-                                    'chatID': chat['chatID'],
-                                    'userID': auth,
-                                    'name': userData['name']
-                                  }
-                                );
-                              },
-                            ),
-                            _buildCustomDivider(),
-                          ],
-                        );
-                      }
-                    },
-                  );
-                },
-              );
-            }
-          }
-        ),
+                              _buildCustomDivider(),
+                            ],
+                          );
+                        }
+                      },
+                    );
+                  },
+                );
+              }
+            }),
       ),
       bottomNavigationBar: BottomAppBar(
-        color: const Color.fromARGB(255, 50, 62, 71), // Color de fondo del menú inferior
+        color: const Color.fromARGB(
+            255, 50, 62, 71), // Color de fondo del menú inferior
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: <Widget>[
@@ -155,6 +166,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
               onPressed: () {
                 // Implementar acción de ajustes
+                Navigator.pushNamed(
+                  context,
+                  "/settings",
+                  arguments: {
+                    'userID': auth,
+                  },
+                );
               },
             ),
           ],
@@ -167,20 +185,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Container(
       margin: const EdgeInsets.only(left: 73.0, right: 5),
       height: 1.0,
-      color: const Color.fromRGBO(227, 229, 215, 1), // Color de la línea del borde
+      color:
+          const Color.fromRGBO(227, 229, 215, 1), // Color de la línea del borde
     );
   }
 
   void _showNewChatBottomSheet(BuildContext context) {
     showModalBottomSheet<void>(
       context: context,
-      isScrollControlled: true, // Hacer que el BottomSheet ocupe toda la pantalla
+      isScrollControlled:
+          true, // Hacer que el BottomSheet ocupe toda la pantalla
       builder: (BuildContext context) {
         // Obtiene la altura total de la pantalla
         final screenHeight = MediaQuery.of(context).size.height;
 
         // Establece una altura fija para el BottomSheet
-        final bottomSheetHeight = screenHeight * 0.8; // Ejemplo: 80% de la pantalla
+        final bottomSheetHeight =
+            screenHeight * 0.8; // Ejemplo: 80% de la pantalla
 
         return Container(
           height: bottomSheetHeight,
@@ -192,7 +213,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
               children: [
                 const Text(
                   'Nuevo Chat',
-                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.black),
+                  style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 20),
@@ -210,23 +234,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   onPressed: () async {
                     Navigator.of(context).pop();
                     print(emailController.text);
-                    final String? userId = await _firestoreUser.getUserIdFromEmail(emailController.text);
-                    if(userId != auth && userId != '' && userId != ''){
+                    final String? userId = await _firestoreUser
+                        .getUserIdFromEmail(emailController.text);
+                    if (userId != auth && userId != '' && userId != '') {
                       final String chatId = auth + userId!;
                       print(chatId);
                       _firestoreChats.createChat(chatId, auth, userId);
-                    } else if(userId == auth){
-                      showSnackBar(context, 'No puedes enviarte mensajes a ti mismo');
-                    } else{
-                      showSnackBar(context, 'Hubo un error, intentalo de nuevo');
+                    } else if (userId == auth) {
+                      showSnackBar(
+                          context, 'No puedes enviarte mensajes a ti mismo');
+                    } else {
+                      showSnackBar(
+                          context, 'Hubo un error, intentalo de nuevo');
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16), // Ajusta la altura del botón
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 16), // Ajusta la altura del botón
                   ),
                   child: const Text(
                     'Empezar a chatear',
-                    style: TextStyle(fontSize: 20), // Ajusta el tamaño del texto del botón
+                    style: TextStyle(
+                        fontSize: 20), // Ajusta el tamaño del texto del botón
                   ),
                 ),
               ],

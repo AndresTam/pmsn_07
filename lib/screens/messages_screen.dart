@@ -1,6 +1,7 @@
 import 'dart:io';
-import 'package:intl/intl.dart';
+
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:pmsn_07/services/firestore_messages.dart';
 import 'package:pmsn_07/services/storage_service.dart';
 import 'package:pmsn_07/util/select_file.dart';
@@ -35,10 +36,12 @@ class _MessagesScreenState extends State<MessagesScreen> {
     super.dispose();
   }
 
-  void _sendMessage(Map<String, dynamic>? args, String type, String messageText) {
+  void _sendMessage(
+      Map<String, dynamic>? args, String type, String messageText) {
     if (messageText.isNotEmpty) {
       String formattedDateTime = DateFormat('yyyy-MM-dd HH:mm:ss').format(now);
-      _firestoreMessage.createMessage(args?['chatID'], messageText, args?['userID'], formattedDateTime, type);
+      _firestoreMessage.createMessage(args?['chatID'], messageText,
+          args?['userID'], formattedDateTime, type);
       _messageController.clear();
       FocusScope.of(context).unfocus();
       _scrollToBottom(0);
@@ -46,7 +49,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
   }
 
   void _scrollToBottom(int length) {
-    if(_scrollController.hasClients){
+    if (_scrollController.hasClients) {
       _scrollController.animateTo(
         _scrollController.position.maxScrollExtent,
         duration: const Duration(milliseconds: 500),
@@ -77,7 +80,8 @@ class _MessagesScreenState extends State<MessagesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final Map<String, dynamic>? args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    final Map<String, dynamic>? args =
+        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
 
     bool shouldIncludeChat(Map<String, dynamic> messages, String targetChatID) {
       return messages['chatID'].contains(targetChatID);
@@ -98,17 +102,22 @@ class _MessagesScreenState extends State<MessagesScreen> {
             Expanded(
               child: FutureBuilder<List<Map<String, dynamic>>>(
                 future: _firestoreMessage.getMessages(),
-                builder: (BuildContext context, AsyncSnapshot<List<Map<String, dynamic>>> snapshot) {
+                builder: (BuildContext context,
+                    AsyncSnapshot<List<Map<String, dynamic>>> snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
                   } else if (snapshot.hasError) {
                     return Center(child: Text('Error: ${snapshot.error}'));
                   } else {
                     final messagesList = snapshot.data ?? [];
-                    final filteredMessagesList = messagesList.where((messages) => shouldIncludeChat(messages, args?['chatID'])).toList();
-                    filteredMessagesList.sort((a, b) => a['date'].compareTo(b['date']));
+                    final filteredMessagesList = messagesList
+                        .where((messages) =>
+                            shouldIncludeChat(messages, args?['chatID']))
+                        .toList();
+                    filteredMessagesList
+                        .sort((a, b) => a['date'].compareTo(b['date']));
                     if (filteredMessagesList.isNotEmpty) {
-                      if(filteredMessagesList.length > 4){
+                      if (filteredMessagesList.length > 4) {
                         WidgetsBinding.instance.addPostFrameCallback((_) {
                           _scrollToBottom(filteredMessagesList.length);
                         });
@@ -120,11 +129,14 @@ class _MessagesScreenState extends State<MessagesScreen> {
                         itemBuilder: (BuildContext context, int index) {
                           final message = filteredMessagesList[index];
                           final isMe = message['sender'] == args?['userID'];
-                          return _buildMessage(message['message'], isMe, message['type']);
+                          return _buildMessage(
+                              message['message'], isMe, message['type']);
                         },
                       );
                     } else {
-                      return const Center(child: Text('Aún no hay mensajes, comienza a chatear!'));
+                      return const Center(
+                          child:
+                              Text('Aún no hay mensajes, comienza a chatear!'));
                     }
                   }
                 },
@@ -144,7 +156,9 @@ class _MessagesScreenState extends State<MessagesScreen> {
         alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
         child: Container(
           decoration: BoxDecoration(
-            color: isMe ? const Color.fromRGBO(165, 200, 202, 1) : const Color.fromRGBO(246, 237, 220, 1),
+            color: isMe
+                ? const Color.fromRGBO(165, 200, 202, 1)
+                : const Color.fromRGBO(246, 237, 220, 1),
             borderRadius: BorderRadius.circular(20.0),
           ),
           padding: const EdgeInsets.all(10.0),
@@ -155,25 +169,28 @@ class _MessagesScreenState extends State<MessagesScreen> {
         ),
       );
     } else if (type == 'image') {
-       return Container(
+      return Container(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 5.0),
         alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
         child: Container(
-          decoration: BoxDecoration(
-            color: isMe ? const Color.fromRGBO(165, 200, 202, 1) : const Color.fromRGBO(246, 237, 220, 1),
-            borderRadius: BorderRadius.circular(20.0),
-          ),
-          padding: const EdgeInsets.all(10.0),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(10.0), // Ajusta el radio según lo que necesites
-            child: Image.network(
-              text,
-              width: 200, // Ancho de la imagen
-              height: 200, // Alto de la imagen
-              fit: BoxFit.cover, // Ajusta la forma en que la imagen se ajusta al contenedor
+            decoration: BoxDecoration(
+              color: isMe
+                  ? const Color.fromRGBO(165, 200, 202, 1)
+                  : const Color.fromRGBO(246, 237, 220, 1),
+              borderRadius: BorderRadius.circular(20.0),
             ),
-          )
-        ),
+            padding: const EdgeInsets.all(10.0),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(
+                  10.0), // Ajusta el radio según lo que necesites
+              child: Image.network(
+                text,
+                width: 200, // Ancho de la imagen
+                height: 200, // Alto de la imagen
+                fit: BoxFit
+                    .cover, // Ajusta la forma en que la imagen se ajusta al contenedor
+              ),
+            )),
       );
     } else if (type == 'video') {
       return Container(
@@ -181,7 +198,9 @@ class _MessagesScreenState extends State<MessagesScreen> {
         alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
         child: Container(
           decoration: BoxDecoration(
-            color: isMe ? const Color.fromRGBO(165, 200, 202, 1) : const Color.fromRGBO(246, 237, 220, 1),
+            color: isMe
+                ? const Color.fromRGBO(165, 200, 202, 1)
+                : const Color.fromRGBO(246, 237, 220, 1),
             borderRadius: BorderRadius.circular(20.0),
           ),
           padding: const EdgeInsets.all(10.0),
@@ -198,7 +217,8 @@ class _MessagesScreenState extends State<MessagesScreen> {
 
   // Método para construir mensajes de video
   Widget _buildVideoMessage(String videoUrl, bool isMe) {
-    VideoPlayerController videoController = VideoPlayerController.networkUrl(Uri.parse(videoUrl));
+    VideoPlayerController videoController =
+        VideoPlayerController.networkUrl(Uri.parse(videoUrl));
     _videoControllers[videoUrl] = videoController;
 
     return GestureDetector(
@@ -220,9 +240,11 @@ class _MessagesScreenState extends State<MessagesScreen> {
 
   Widget _buildInputField(BuildContext context, Map<String, dynamic>? args) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(8.0, 8.0, 8.0, 12.0), // Ajusta el margen inferior
+      padding: const EdgeInsets.fromLTRB(
+          8.0, 8.0, 8.0, 12.0), // Ajusta el margen inferior
       decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: Color.fromRGBO(118, 130, 141, 1))),
+        border:
+            Border(top: BorderSide(color: Color.fromRGBO(118, 130, 141, 1))),
         color: Color.fromRGBO(88, 104, 117, 1),
       ),
       child: Padding(
@@ -234,26 +256,30 @@ class _MessagesScreenState extends State<MessagesScreen> {
                 controller: _messageController,
                 decoration: InputDecoration(
                   hintText: 'Escribe un mensaje...',
-                  hintStyle: const TextStyle(color: Color.fromRGBO(246, 237, 220, 1)),
+                  hintStyle:
+                      const TextStyle(color: Color.fromRGBO(246, 237, 220, 1)),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20.0)
-                  ),
+                      borderRadius: BorderRadius.circular(20.0)),
                 ),
               ),
             ),
             IconButton(
-              icon: const Icon(Icons.add,
+              icon: const Icon(
+                Icons.add,
                 color: Color.fromRGBO(246, 237, 220, 1),
               ),
               onPressed: () {
-                _showBottomSheet(context, args); // Mostrar la BottomSheet al hacer clic
+                _showBottomSheet(
+                    context, args); // Mostrar la BottomSheet al hacer clic
               },
             ),
             IconButton(
-              icon: const Icon(Icons.send,
+              icon: const Icon(
+                Icons.send,
                 color: Color.fromRGBO(246, 237, 220, 1),
               ),
-              onPressed: () => _sendMessage(args, 'text', _messageController.text.trim()),
+              onPressed: () =>
+                  _sendMessage(args, 'text', _messageController.text.trim()),
             ),
           ],
         ),
@@ -272,7 +298,8 @@ class _MessagesScreenState extends State<MessagesScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               ListTile(
-                leading: const Icon(Icons.image, color: Color.fromRGBO(35, 42, 48, 1)),
+                leading: const Icon(Icons.image,
+                    color: Color.fromRGBO(35, 42, 48, 1)),
                 title: const Text(
                   'Enviar imagen',
                   style: TextStyle(color: Color.fromRGBO(35, 42, 48, 1)),
@@ -280,7 +307,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                 onTap: () async {
                   final image = await getImagenByGallery();
                   setState(() {
-                    if(image != null){
+                    if (image != null) {
                       imageToUpload = File(image.path);
                     }
                   });
@@ -289,7 +316,8 @@ class _MessagesScreenState extends State<MessagesScreen> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.camera, color: Color.fromRGBO(35, 42, 48, 1)),
+                leading: const Icon(Icons.camera,
+                    color: Color.fromRGBO(35, 42, 48, 1)),
                 title: const Text(
                   'Tomar foto',
                   style: TextStyle(color: Color.fromRGBO(35, 42, 48, 1)),
@@ -297,7 +325,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                 onTap: () async {
                   final image = await getImagenByCamera();
                   setState(() {
-                    if(image != null){
+                    if (image != null) {
                       imageToUpload = File(image.path);
                     }
                   });
@@ -306,7 +334,8 @@ class _MessagesScreenState extends State<MessagesScreen> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.video_collection, color: Color.fromRGBO(35, 42, 48, 1)),
+                leading: const Icon(Icons.video_collection,
+                    color: Color.fromRGBO(35, 42, 48, 1)),
                 title: const Text(
                   'Enviar Video',
                   style: TextStyle(color: Color.fromRGBO(35, 42, 48, 1)),
@@ -314,7 +343,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                 onTap: () async {
                   final image = await getVideoByGallery();
                   setState(() {
-                    if(image != null){
+                    if (image != null) {
                       imageToUpload = File(image.path);
                     }
                   });
@@ -323,7 +352,8 @@ class _MessagesScreenState extends State<MessagesScreen> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.video_call_rounded, color: Color.fromRGBO(35, 42, 48, 1)),
+                leading: const Icon(Icons.video_call_rounded,
+                    color: Color.fromRGBO(35, 42, 48, 1)),
                 title: const Text(
                   'Tomar Video',
                   style: TextStyle(color: Color.fromRGBO(35, 42, 48, 1)),
@@ -331,7 +361,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                 onTap: () async {
                   final image = await getVideoByCamera();
                   setState(() {
-                    if(image != null){
+                    if (image != null) {
                       imageToUpload = File(image.path);
                     }
                   });
@@ -346,8 +376,9 @@ class _MessagesScreenState extends State<MessagesScreen> {
     );
   }
 
-  Future<void> _showImageDialog(BuildContext context, Map<String, dynamic>? args, String type) async {
-    if(imageToUpload != null && type == 'image'){
+  Future<void> _showImageDialog(
+      BuildContext context, Map<String, dynamic>? args, String type) async {
+    if (imageToUpload != null && type == 'image') {
       return showDialog<void>(
         context: context,
         builder: (BuildContext context) {
@@ -368,13 +399,15 @@ class _MessagesScreenState extends State<MessagesScreen> {
                   TextButton(
                     onPressed: () async {
                       showSnackBar(context, 'Enviando Archivo');
-                      final String fileName = imageToUpload!.path.split("/").last;
-                      final uploadedImage = await uploadChatImage(imageToUpload!, 'chats', args?['chatID'], fileName);
-                      if(uploadedImage.isNotEmpty){
+                      final String fileName =
+                          imageToUpload!.path.split("/").last;
+                      final uploadedImage = await uploadChatImage(
+                          imageToUpload!, 'chats', args?['chatID'], fileName);
+                      if (uploadedImage.isNotEmpty) {
                         _sendMessage(args, 'image', uploadedImage);
                         showSnackBar(context, 'Archivo Enviado');
                         Navigator.of(context).pop();
-                      } else{
+                      } else {
                         showSnackBar(context, 'Ocurrio algún fallo');
                         Navigator.of(context).pop();
                       }
@@ -387,54 +420,59 @@ class _MessagesScreenState extends State<MessagesScreen> {
           );
         },
       );
-    } else if(imageToUpload != null && type == 'video'){
-      _videoPlayerController = VideoPlayerController.file(imageToUpload!)..initialize().then((_) {
-        setState(() {});
-        _videoPlayerController!.play;
-      });
-      if(_videoPlayerController != null){
+    } else if (imageToUpload != null && type == 'video') {
+      _videoPlayerController = VideoPlayerController.file(imageToUpload!)
+        ..initialize().then((_) {
+          setState(() {});
+          _videoPlayerController!.play;
+        });
+      if (_videoPlayerController != null) {
         return showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-            title: const Text('Video'),
-            content: AspectRatio(
-              aspectRatio: _videoPlayerController!.value.aspectRatio,
-              child: VideoPlayer(_videoPlayerController!),
-            ),
-            backgroundColor: const Color.fromRGBO(189, 214, 210, 1),
-            actions: <Widget>[
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                    child: const Text('Cerrar'),
-                  ),
-                  TextButton(
-                    onPressed: () async {
-                      showSnackBar(context, 'Enviando Archivo');
-                      final String fileName = imageToUpload!.path.split("/").last;
-                      final uploadedImage = await uploadChatVideo(imageToUpload!, 'chats', args?['chatID'], fileName);
-                      if(uploadedImage.isNotEmpty){
-                        _sendMessage(args, 'video', uploadedImage);
-                        showSnackBar(context, 'Archivo Enviado');
-                        Navigator.of(context).pop();
-                      } else{
-                        showSnackBar(context, 'Ocurrio algún fallo');
-                        Navigator.of(context).pop();
-                      }
-                    },
-                    child: const Text('Enviar'),
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: const Text('Video'),
+                content: AspectRatio(
+                  aspectRatio: _videoPlayerController!.value.aspectRatio,
+                  child: VideoPlayer(_videoPlayerController!),
+                ),
+                backgroundColor: const Color.fromRGBO(189, 214, 210, 1),
+                actions: <Widget>[
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                        child: const Text('Cerrar'),
+                      ),
+                      TextButton(
+                        onPressed: () async {
+                          showSnackBar(context, 'Enviando Archivo');
+                          final String fileName =
+                              imageToUpload!.path.split("/").last;
+                          final uploadedImage = await uploadChatVideo(
+                              imageToUpload!,
+                              'chats',
+                              args?['chatID'],
+                              fileName);
+                          if (uploadedImage.isNotEmpty) {
+                            _sendMessage(args, 'video', uploadedImage);
+                            showSnackBar(context, 'Archivo Enviado');
+                            Navigator.of(context).pop();
+                          } else {
+                            showSnackBar(context, 'Ocurrio algún fallo');
+                            Navigator.of(context).pop();
+                          }
+                        },
+                        child: const Text('Enviar'),
+                      ),
+                    ],
                   ),
                 ],
-              ),
-            ],
-          );
-          }
-        );
+              );
+            });
       }
     }
   }
