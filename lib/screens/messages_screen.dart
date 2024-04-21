@@ -131,7 +131,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                         final message = messagesList[index];
                         final isMe = message['sender'] == args?['userID'];
                         return _buildMessage(
-                            message['message'], isMe, message['type']);
+                            message['message'], isMe, message['type'], message['date']);
                       },
                     );
                   }
@@ -145,7 +145,10 @@ class _MessagesScreenState extends State<MessagesScreen> {
     );
   }
 
-  Widget _buildMessage(String text, bool isMe, String type) {
+  Widget _buildMessage(String text, bool isMe, String type, String date) {
+    DateTime dateTime = DateTime.parse(date);
+    DateFormat dateFormat = DateFormat.Hm();
+    String formattedTime = dateFormat.format(dateTime);
     if (type == 'text') {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 5.0),
@@ -158,9 +161,18 @@ class _MessagesScreenState extends State<MessagesScreen> {
             borderRadius: BorderRadius.circular(20.0),
           ),
           padding: const EdgeInsets.all(10.0),
-          child: Text(
-            text,
-            style: const TextStyle(fontSize: 16.0),
+          child: Column(
+            crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+            children: [
+              Text(
+                text,
+                style: const TextStyle(fontSize: 16.0),
+              ),
+              Text(
+                formattedTime, // Replace with actual timestamp
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+            ],
           ),
         ),
       );

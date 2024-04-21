@@ -25,46 +25,73 @@ class _GroupsScreenState extends State<GroupsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Mis Grupos'),
+        title: const Text('Mis Grupos', style: TextStyle(color: Color.fromRGBO(246, 237, 220, 1))),
+        backgroundColor: const Color.fromRGBO(88, 104, 117, 1),
       ),
-      body: FutureBuilder<List<Map<String, dynamic>>>(
-        future: _groupsFuture,
-        builder: (BuildContext context, AsyncSnapshot<List<Map<String, dynamic>>> snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          } else {
-            final groupsList = snapshot.data ?? [];
-            final userGroups = groupsList.where((group) => group['participants'].contains(auth)).toList();
-            if (userGroups.isEmpty) {
-              return Center(child: Text('No tienes grupos disponibles'));
+      body: Container(
+        decoration: const BoxDecoration(
+          color: Color.fromRGBO(88, 104, 117, 1),
+        ),
+        child: FutureBuilder<List<Map<String, dynamic>>>(
+          future: _groupsFuture,
+          builder: (BuildContext context, AsyncSnapshot<List<Map<String, dynamic>>> snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              return Center(child: Text('Error: ${snapshot.error}'));
+            } else {
+              final groupsList = snapshot.data ?? [];
+              final userGroups = groupsList.where((group) => group['participants'].contains(auth)).toList();
+              if (userGroups.isEmpty) {
+                return Center(child: Text('No tienes grupos disponibles'));
+              }
+              return ListView.builder(
+                itemCount: userGroups.length,
+                itemBuilder: (BuildContext context, int index) {
+                  final group = userGroups[index];
+                  print(group);
+                  return Column(
+                    children: [
+                      ListTile(
+                        leading: ClipOval(
+                          child: Image.network(
+                            group['imageUrl'],
+                            width: 43,
+                            height: 43,
+                            fit: BoxFit.cover,
+                          )
+                        ),
+                        title: Text(group['name'] ?? '', style: TextStyle(color: Color.fromRGBO(246, 237, 220, 1))),
+                        subtitle: Text(group['description'] ?? '', style: TextStyle(color: Color.fromRGBO(172, 170, 165, 1))),
+                        onTap: () {
+                          Navigator.pushNamed(
+                            context,
+                            "/groupMessages",
+                            arguments: {
+                              'groupID': group['groupID'],
+                              'name': group['asignature'],
+                            }
+                          );
+                        },
+                      ),
+                      _buildCustomDivider(),
+                    ],
+                  );
+                },
+              );
             }
-            return ListView.builder(
-              itemCount: userGroups.length,
-              itemBuilder: (BuildContext context, int index) {
-                final group = userGroups[index];
-                return ListTile(
-                  leading: ClipOval(
-                    child: Image.network(
-                      group['imageUrl'],
-                      width: 43,
-                      height: 43,
-                      fit: BoxFit.cover,
-                    )
-                  ),
-                  title: Text(group['asignature'] ?? ''),
-                  subtitle: Text(group['description'] ?? ''),
-                  onTap: () {
-                    // Acción al seleccionar un grupo
-                    // Por ejemplo, abrir detalles del grupo o mensajes del grupo
-                  },
-                );
-              },
-            );
-          }
-        },
+          },
+        ),
       ),
+    );
+  }
+
+  Widget _buildCustomDivider() {
+    return Container(
+      margin: const EdgeInsets.only(left: 73.0, right: 5),
+      height: 1.0,
+      color:
+          const Color.fromRGBO(227, 229, 215, 1), // Color de la línea del borde
     );
   }
 }

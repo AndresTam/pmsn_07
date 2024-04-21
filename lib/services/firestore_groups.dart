@@ -4,10 +4,11 @@ class FirestoreGroups{
   final CollectionReference _groupsCollection = FirebaseFirestore.instance.collection('groups');
 
   //Create new group in firestore
-  Future<void> createGroup(String groupId, String asignature, String description, String profesorId, List<String> participants, String imageUrl) async {
+  Future<void> createGroup(String groupId, String name, String asignature, String description, String profesorId, List<String> participants, String imageUrl) async {
     try{
       await _groupsCollection.doc(groupId).set({
         'groupID': groupId,
+        'name': name,
         'asignature': asignature,
         'description': description,
         'profesorID': profesorId,

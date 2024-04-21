@@ -6,6 +6,7 @@ import 'package:pmsn_07/screens/contacts_screen.dart';
 import 'package:pmsn_07/screens/dashboard_screen.dart';
 import 'package:pmsn_07/screens/group_creation_screen.dart';
 import 'package:pmsn_07/screens/group_info_screen.dart';
+import 'package:pmsn_07/screens/groups_messages_screen.dart';
 import 'package:pmsn_07/screens/groups_screen.dart';
 import 'package:pmsn_07/screens/login_screen.dart';
 import 'package:pmsn_07/screens/messages_screen.dart';
@@ -42,6 +43,7 @@ class MyApp extends StatelessWidget {
         "/groups": (BuildContext context) => const GroupsScreen(),
         "/groupInfo": (BuildContext context) => const GroupInfoScreen(),
         "/groupCreation": (BuildContext context) => const GroupCreationScreen(),
+        "/groupMessages": (BuildContext context) => const GroupsMessageScreen(),
         
       },
     );

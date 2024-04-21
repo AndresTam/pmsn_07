@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:pmsn_07/main.dart';
 import 'package:pmsn_07/services/auth_service.dart';
 import 'package:pmsn_07/services/firestore_user.dart';
@@ -188,12 +189,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               SettingsTile.navigation(
                                 onPressed: (context) async {
                                   await _auth.signOut();
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => MyApp(),
-                                    ),
-                                  );
+                                  SystemNavigator.pop();
+                                  runApp(const MyApp());
                                 },
                                 leading: const Icon(Icons.logout),
                                 title: const Text('Cerrar sesión'),

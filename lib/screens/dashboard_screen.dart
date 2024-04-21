@@ -56,7 +56,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 final userType = await getUserType();
                 if (profesor.contains(userType!.toLowerCase())) {
                   _showNewGroupBottomSheet(context); // Mostrar modal para profesor
-                } else if (student.contains(userType!.toLowerCase())) {
+                } else if (student.contains(userType.toLowerCase())) {
                   _showNewChatBottomSheet(context); // Mostrar modal para alumno
                 }
               },

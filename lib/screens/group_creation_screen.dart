@@ -88,7 +88,7 @@ class _GroupCreationScreenState extends State<GroupCreationScreen> {
         onPressed: () async {
           if (participantsList.length > 1) {
             showSnackBar(context, 'Guardando Datos');
-            _firestoreGroups.createGroup(args?['groupId'], args?['asignature'], args?['description'], auth, participantsList, args?['image']);
+            _firestoreGroups.createGroup(args?['groupId'], args?['name'], args?['asignature'], args?['description'], auth, participantsList, args?['image']);
             showSnackBar(context, 'Datos Guardados');
             Navigator.pushNamed(context, "/dash");
           } else {
