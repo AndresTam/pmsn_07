@@ -4,6 +4,9 @@ import 'package:pmsn_07/firebase_options.dart';
 import 'package:pmsn_07/screens/config_profile_screen.dart';
 import 'package:pmsn_07/screens/contacts_screen.dart';
 import 'package:pmsn_07/screens/dashboard_screen.dart';
+import 'package:pmsn_07/screens/group_creation_screen.dart';
+import 'package:pmsn_07/screens/group_info_screen.dart';
+import 'package:pmsn_07/screens/groups_screen.dart';
 import 'package:pmsn_07/screens/login_screen.dart';
 import 'package:pmsn_07/screens/messages_screen.dart';
 import 'package:pmsn_07/screens/profile_registration.dart';
@@ -36,6 +39,10 @@ class MyApp extends StatelessWidget {
         "/settings": (BuildContext context) => const SettingsScreen(),
         "/contacts": (BuildContext context) => const ContactsScreen(),
         "/profileConfig": (BuildContext context) => const ConfigProfileScreen(),
+        "/groups": (BuildContext context) => const GroupsScreen(),
+        "/groupInfo": (BuildContext context) => const GroupInfoScreen(),
+        "/groupCreation": (BuildContext context) => const GroupCreationScreen(),
+        
       },
     );
   }

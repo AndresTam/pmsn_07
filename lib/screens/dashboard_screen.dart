@@ -16,7 +16,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final FirestoreUser _firestoreUser = FirestoreUser();
   final String auth = FirebaseAuth.instance.currentUser!.uid;
   final TextEditingController emailController = TextEditingController();
-  Stream<List<Map<String, dynamic>>> _chatsStream = FirestoreChats().getChatsStream();
+  final Stream<List<Map<String, dynamic>>> _chatsStream = FirestoreChats().getChatsStream();
+  final List<String> profesor = ['maestro','profesor','docente'];
+  final List<String> student = ['estudiante','alumno'];
+
+  Future<String?> getUserType() async {
+      final userData = await _firestoreUser.getUser(auth);
+      if (userData != null && userData.containsKey('position')) {
+        return userData['position']; 
+      }
+    
+    return null;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,8 +52,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Icons.add,
                 color: Color.fromRGBO(246, 237, 220, 1),
               ), // Icono de suma (+)
-              onPressed: () {
-                _showNewChatBottomSheet(context);
+              onPressed: () async {
+                final userType = await getUserType();
+                if (profesor.contains(userType!.toLowerCase())) {
+                  _showNewGroupBottomSheet(context); // Mostrar modal para profesor
+                } else if (student.contains(userType!.toLowerCase())) {
+                  _showNewChatBottomSheet(context); // Mostrar modal para alumno
+                }
               },
             ),
           ],
@@ -96,12 +112,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               children: [
                                 ListTile(
                                   leading: ClipOval(
-                                      child: Image.network(
-                                    userData['imgProfile'],
-                                    width: 43,
-                                    height: 43,
-                                    fit: BoxFit.cover,
-                                  )),
+                                    child: Image.network(
+                                      userData['imgProfile'],
+                                      width: 43,
+                                      height: 43,
+                                      fit: BoxFit.cover,
+                                    )
+                                  ),
                                   title: Text(
                                     userData['name'],
                                     style: const TextStyle(
@@ -144,11 +161,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
             children: <Widget>[
               IconButton(
                 icon: const Icon(
-                  Icons.group,
+                  Icons.perm_contact_cal,
                   color: Color.fromRGBO(246, 237, 220, 1),
                 ),
                 onPressed: () {
                   Navigator.pushNamed(context, "/contacts");
+                },
+              ),
+              IconButton(
+                icon: const Icon(
+                  Icons.group,
+                  color: Color.fromRGBO(246, 237, 220, 1),
+                ),
+                onPressed: () {
+                  Navigator.pushNamed(context, "/groups");
                 },
               ),
               IconButton(
@@ -250,6 +276,98 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     'Empezar a chatear',
                     style: TextStyle(
                         fontSize: 20), // Ajusta el tamaño del texto del botón
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showNewGroupBottomSheet(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled:
+          true,
+      builder: (BuildContext context) {
+        final screenHeight = MediaQuery.of(context).size.height;
+        final bottomSheetHeight = screenHeight * 0.8;
+        return Container(
+          height: bottomSheetHeight,
+          padding: const EdgeInsets.all(16),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'Nuevo Chat',
+                  style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                TextField(
+                  controller: emailController,
+                  decoration: InputDecoration(
+                    hintText: 'Introduce el correo electrónico',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () async {
+                    Navigator.of(context).pop();
+                    final String? userId = await _firestoreUser.getUserIdFromEmail(emailController.text);
+                    if (userId != auth && userId != '' && userId != '') {
+                      final String chatId = auth + userId!;
+                      _firestoreChats.createChat(chatId, auth, userId);
+                    } else if (userId == auth) {
+                      showSnackBar(
+                          context, 'No puedes enviarte mensajes a ti mismo');
+                    } else {
+                      showSnackBar(
+                          context, 'Hubo un error, intentalo de nuevo');
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 16),
+                  ),
+                  child: const Text(
+                    'Empezar a chatear',
+                    style: TextStyle(
+                        fontSize: 20), 
+                  ),
+                ),
+                const SizedBox(height: 30),
+                const Text(
+                  'O',
+                  style: TextStyle(
+                    fontSize: 20,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () async {
+                    Navigator.of(context).pop();
+                    Navigator.pushNamed(context, "/groupInfo");
+                  },
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 16),
+                  ),
+                  child: const Text(
+                    'Crear Grupo',
+                    style: TextStyle(
+                        fontSize: 20),
                   ),
                 ),
               ],

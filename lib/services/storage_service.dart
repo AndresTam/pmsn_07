@@ -53,3 +53,23 @@ Future<String> uploadChatVideo(File image, String file, String chatId, String na
 
   return url;
 }
+
+Future<String> uploadGroupImage(File image, String file, String groupId, String name) async {
+  final Reference ref = storage.ref().child(file).child(groupId).child(name);
+  try{
+    await ref.delete();
+  } on FirebaseException catch(e){
+    print(e);
+  }
+
+  try{
+    await ref.putFile(image);
+    value = true;
+  } on FirebaseException catch(e){
+    print(e);
+  }
+
+  final String url = await ref.getDownloadURL();
+
+  return url;
+}
