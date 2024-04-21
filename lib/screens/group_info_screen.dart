@@ -179,7 +179,7 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
           var uuid = const Uuid();
           String groupId = uuid.v4();
           final uploadedImage = await uploadGroupImage(imageToUpload!, 'groups', groupId, 'groupImgProfile');
-          if(uploadedImage != null && uploadedImage != ''){
+          if(uploadedImage != ''){
             Navigator.pushNamed(
               context,
               "/groupCreation",

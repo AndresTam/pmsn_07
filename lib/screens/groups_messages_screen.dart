@@ -6,7 +6,6 @@ import 'package:pmsn_07/util/select_file.dart';
 import 'package:pmsn_07/util/snackbar.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:pmsn_07/services/firestore_user.dart';
-import 'package:pmsn_07/services/firestore_groups.dart';
 import 'package:pmsn_07/services/firestore_messages.dart';
 import 'package:video_player/video_player.dart';
 
@@ -19,10 +18,8 @@ class GroupsMessageScreen extends StatefulWidget {
 
 class _GroupsMessageScreenState extends State<GroupsMessageScreen> {
   final String auth = FirebaseAuth.instance.currentUser!.uid;
-  final FirestoreGroups _firestoreGroups = FirestoreGroups();
   final FirestoreMessage _firestoreMessage = FirestoreMessage();
   final FirestoreUser _firestoreUser = FirestoreUser();
-  late Future<List<Map<String, dynamic>>> _messagesFuture;
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   VideoPlayerController? _videoPlayerController;
@@ -97,7 +94,6 @@ class _GroupsMessageScreenState extends State<GroupsMessageScreen> {
   @override
   Widget build(BuildContext context) {
     final Map<String, dynamic>? args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-    _messagesFuture =  _firestoreMessage.getMessagesForGroup(args?['groupID']);
     _messagesStream = _firestoreMessage.getMessagesStream(args?['groupID']);
 
     return Scaffold(
