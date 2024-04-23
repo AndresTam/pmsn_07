@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:pmsn_07/util/snackbar.dart';
+import 'package:pmsn_07/common/static.dart';
 import 'package:pmsn_07/services/auth_service.dart';
+import 'package:pmsn_07/services/firestore_user.dart';
+import 'package:pmsn_07/util/snackbar.dart';
+import 'package:zego_uikit_prebuilt_call/zego_uikit_prebuilt_call.dart';
+import 'package:zego_uikit_signaling_plugin/zego_uikit_signaling_plugin.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -12,7 +16,7 @@ class LoginScreen extends StatelessWidget {
 
     final TextEditingController emailController = TextEditingController();
     final TextEditingController passwordController = TextEditingController();
-
+    final FirestoreUser _firestoreUser = FirestoreUser();
     final txtEmail = TextFormField(
       controller: emailController,
       decoration: const InputDecoration(
@@ -24,7 +28,7 @@ class LoginScreen extends StatelessWidget {
         ),
       ),
       validator: (value) {
-        if(value != null && value.isEmpty){
+        if (value != null && value.isEmpty) {
           return "Ingresa un correo";
         }
         return null;
@@ -56,25 +60,37 @@ class LoginScreen extends StatelessWidget {
       ),
       child: const Text(
         'Iniciar Sesión',
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: 20
-        ),
+        style: TextStyle(color: Colors.white, fontSize: 20),
       ),
       onPressed: () async {
-        if(!validationForm.currentState!.validate()){
-          Future(() => showDialog(
-            context: context, 
-            builder: (BuildContext context) => const AlertDialog(
-              title: Text("No se pudo iniciar sesión"),
-              content: Text("Debes llenar todos los campos"),
-          ))
+        if (!validationForm.currentState!.validate()) {
+          Future(
+            () => showDialog(
+              context: context,
+              builder: (BuildContext context) => const AlertDialog(
+                title: Text("No se pudo iniciar sesión"),
+                content: Text("Debes llenar todos los campos"),
+              ),
+            ),
           );
-        } else{
-          var result = await auth.singinEmailAndPassword(emailController.text, passwordController.text);
-          if(result == 1 || result == 2){
+        } else {
+          var result = await auth.singinEmailAndPassword(
+              emailController.text, passwordController.text);
+          if (result == 1 || result == 2) {
             showSnackBar(context, 'Correo o contraseña incorrectos');
-          } else if(result != null){
+          } else if (result != null) {
+            final userID =
+                await _firestoreUser.getUserIdFromEmail(emailController.text);
+            print("userID: ${userID}");
+
+            ZegoUIKitPrebuiltCallInvitationService().init(
+              appID: Statics.appID,
+              appSign: Statics.appSign,
+              userID: userID.toString(),
+              userName: emailController.text,
+              plugins: [ZegoUIKitSignalingPlugin()],
+            );
+
             Navigator.pushNamed(context, "/dash");
           }
         }
@@ -96,28 +112,27 @@ class LoginScreen extends StatelessWidget {
         child: Center(
           child: Padding(
             padding: const EdgeInsets.all(20.0),
-            child: ListView(
-              children: [
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Image.asset('images/logo.png'),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.15), // Efecto glass
-                        borderRadius: BorderRadius.circular(15.0),
-                      ),
-                      padding: const EdgeInsets.all(20.0),
-                      child: Column(
-                        children: [
-                          const Text(
-                            'Iniciar Sesión',
-                            style: TextStyle(
-                              color: Color.fromRGBO(88, 104, 117, 1),
-                              fontSize: 30,
-                            ),
+            child: ListView(children: [
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.asset('images/logo.png'),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.15), // Efecto glass
+                      borderRadius: BorderRadius.circular(15.0),
+                    ),
+                    padding: const EdgeInsets.all(20.0),
+                    child: Column(
+                      children: [
+                        const Text(
+                          'Iniciar Sesión',
+                          style: TextStyle(
+                            color: Color.fromRGBO(88, 104, 117, 1),
+                            fontSize: 30,
                           ),
-                          Form(
+                        ),
+                        Form(
                             key: validationForm,
                             child: Column(
                               children: [
@@ -127,27 +142,25 @@ class LoginScreen extends StatelessWidget {
                                 const SizedBox(height: 20.0),
                                 btnSingup,
                               ],
-                            )
-                          ),
-                        ],
+                            )),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20.0),
+                  GestureDetector(
+                    child: const Text(
+                      '¿No tienes cuenta? Registrate aquí.',
+                      style: TextStyle(
+                        color: Colors.white,
                       ),
                     ),
-                    const SizedBox(height: 20.0),
-                    GestureDetector(
-                      child: const Text(
-                        '¿No tienes cuenta? Registrate aquí.',
-                        style: TextStyle(
-                          color: Colors.white,
-                        ),
-                      ),
-                      onTap: () {
-                        Navigator.pushNamed(context, "/singup");
-                      },
-                    ),
-                  ],
-                ),
-              ]
-            ),
+                    onTap: () {
+                      Navigator.pushNamed(context, "/singup");
+                    },
+                  ),
+                ],
+              ),
+            ]),
           ),
         ),
       ),

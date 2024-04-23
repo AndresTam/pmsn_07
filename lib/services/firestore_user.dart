@@ -85,4 +85,20 @@ class FirestoreUser {
       return null;
     }
   }
+
+  //Get nameuser information by id
+  Future<String?> getUserNameByID(String userID) async {
+    try {
+      QuerySnapshot querySnapshot =
+          await _userCollection.where('userID', isEqualTo: userID).get();
+      if (querySnapshot.docs.isNotEmpty) {
+        return querySnapshot.docs.first['name'] as String?;
+      } else {
+        return 'No se encontro el usuario';
+      }
+    } catch (e) {
+      print('Error getting user: $e');
+      return null;
+    }
+  }
 }

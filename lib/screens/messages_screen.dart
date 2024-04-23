@@ -3,10 +3,12 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:pmsn_07/services/firestore_messages.dart';
+import 'package:pmsn_07/services/firestore_user.dart';
 import 'package:pmsn_07/services/storage_service.dart';
 import 'package:pmsn_07/util/select_file.dart';
 import 'package:pmsn_07/util/snackbar.dart';
 import 'package:video_player/video_player.dart';
+import 'package:zego_uikit_prebuilt_call/zego_uikit_prebuilt_call.dart';
 
 class MessagesScreen extends StatefulWidget {
   const MessagesScreen({Key? key}) : super(key: key);
@@ -17,6 +19,7 @@ class MessagesScreen extends StatefulWidget {
 
 class _MessagesScreenState extends State<MessagesScreen> {
   final FirestoreMessage _firestoreMessage = FirestoreMessage();
+  final FirestoreUser _firestoreUser = FirestoreUser();
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   VideoPlayerController? _videoPlayerController;
@@ -90,7 +93,8 @@ class _MessagesScreenState extends State<MessagesScreen> {
     final Map<String, dynamic>? args =
         ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
     _messagesStream = _firestoreMessage.getMessagesStream(args?['chatID']);
-
+    String userID = args?['userID1'];
+    String? UserName;
     // bool shouldIncludeChat(Map<String, dynamic> messages, String targetChatID) {
     //   return messages['chatID'].contains(targetChatID);
     // }
@@ -101,12 +105,36 @@ class _MessagesScreenState extends State<MessagesScreen> {
           args?['name'] ?? 'Chat',
           style: const TextStyle(color: Color.fromRGBO(246, 237, 220, 1)),
         ),
-        backgroundColor: const Color.fromRGBO(88, 104, 117, 1),
+        backgroundColor: Color.fromARGB(255, 0, 140, 255),
+        actions: [
+          IconButton(
+            onPressed: () async {
+              UserName = await _firestoreUser.getUserNameByID(userID);
+              print(
+                  "nombre Receptor: ${args!['name'].toString()} \n chatID: ${args['userID2'].toString()} \n name:${UserName.toString()}");
+              _sendMessage(
+                  args, 'videoCall', "llamada de ${UserName.toString()}");
+              // video call button
+              actionButton(
+                true,
+                UserName.toString(),
+                args['userID1'].toString(),
+                args['name'].toString(),
+                args['userID2'].toString(),
+              );
+            },
+            icon: const Icon(Icons.phone),
+          ),
+        ],
       ),
       body: Container(
         color: const Color.fromRGBO(88, 104, 117, 1),
         child: Column(
           children: [
+            // TopBar(
+            //   upperTitle: 'Welcome back,',
+            //   title: args?['name'],
+            // ),
             Expanded(
               child: StreamBuilder<List<Map<String, dynamic>>>(
                 stream: _messagesStream,
@@ -131,7 +159,12 @@ class _MessagesScreenState extends State<MessagesScreen> {
                         final message = messagesList[index];
                         final isMe = message['sender'] == args?['userID'];
                         return _buildMessage(
-                            message['message'], isMe, message['type']);
+                            message['message'],
+                            isMe,
+                            message['type'],
+                            args?['chatID'],
+                            userID,
+                            UserName.toString());
                       },
                     );
                   }
@@ -145,7 +178,25 @@ class _MessagesScreenState extends State<MessagesScreen> {
     );
   }
 
-  Widget _buildMessage(String text, bool isMe, String type) {
+  actionButton(bool isVideo, String nameReceptor, String IDReceptor,
+          String nameReceiver, String IDReceiver) =>
+      ZegoSendCallInvitationButton(
+        isVideoCall: isVideo,
+        resourceID: "zego_call",
+        invitees: [
+          ZegoUIKitUser(
+            id: nameReceiver,
+            name: IDReceiver,
+          ),
+          ZegoUIKitUser(
+            id: IDReceptor,
+            name: nameReceptor,
+          ),
+        ],
+      );
+
+  Widget _buildMessage(String text, bool isMe, String type, String chatID,
+      String userID, String userName) {
     if (type == 'text') {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 5.0),
@@ -204,6 +255,39 @@ class _MessagesScreenState extends State<MessagesScreen> {
             borderRadius: BorderRadius.circular(10.0),
             child: _buildVideoMessage(text, isMe),
           ),
+        ),
+      );
+    } else if (type == 'videoCall') {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 5.0),
+        alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+        child: Container(
+          decoration: BoxDecoration(
+            color: isMe
+                ? const Color.fromRGBO(165, 200, 202, 1)
+                : const Color.fromRGBO(246, 237, 220, 1),
+            borderRadius: BorderRadius.circular(20.0),
+          ),
+          padding: const EdgeInsets.all(10.0),
+          child: isMe
+              ? Text("Llamada")
+              : ElevatedButton(
+                  onPressed: () {
+                    print(
+                        "callID: ${chatID}\n userID1: ${userID} \n username: ${userName}");
+                    Navigator.pushNamed(
+                      context,
+                      "/call",
+                      arguments: {
+                        'callID': chatID,
+                        'userID1': userID,
+                        'username': userName,
+                        'input': 0,
+                      },
+                    );
+                  },
+                  child: const Text('Llamada..'),
+                ),
         ),
       );
     } else {
@@ -424,51 +508,49 @@ class _MessagesScreenState extends State<MessagesScreen> {
         });
       if (_videoPlayerController != null) {
         return showDialog(
-            context: context,
-            builder: (BuildContext context) {
-              return AlertDialog(
-                title: const Text('Video'),
-                content: AspectRatio(
-                  aspectRatio: _videoPlayerController!.value.aspectRatio,
-                  child: VideoPlayer(_videoPlayerController!),
-                ),
-                backgroundColor: const Color.fromRGBO(189, 214, 210, 1),
-                actions: <Widget>[
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      TextButton(
-                        onPressed: () {
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text('Video'),
+              content: AspectRatio(
+                aspectRatio: _videoPlayerController!.value.aspectRatio,
+                child: VideoPlayer(_videoPlayerController!),
+              ),
+              backgroundColor: const Color.fromRGBO(189, 214, 210, 1),
+              actions: <Widget>[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      child: const Text('Cerrar'),
+                    ),
+                    TextButton(
+                      onPressed: () async {
+                        showSnackBar(context, 'Enviando Archivo');
+                        final String fileName =
+                            imageToUpload!.path.split("/").last;
+                        final uploadedImage = await uploadChatVideo(
+                            imageToUpload!, 'chats', args?['chatID'], fileName);
+                        if (uploadedImage.isNotEmpty) {
+                          _sendMessage(args, 'video', uploadedImage);
+                          showSnackBar(context, 'Archivo Enviado');
                           Navigator.of(context).pop();
-                        },
-                        child: const Text('Cerrar'),
-                      ),
-                      TextButton(
-                        onPressed: () async {
-                          showSnackBar(context, 'Enviando Archivo');
-                          final String fileName =
-                              imageToUpload!.path.split("/").last;
-                          final uploadedImage = await uploadChatVideo(
-                              imageToUpload!,
-                              'chats',
-                              args?['chatID'],
-                              fileName);
-                          if (uploadedImage.isNotEmpty) {
-                            _sendMessage(args, 'video', uploadedImage);
-                            showSnackBar(context, 'Archivo Enviado');
-                            Navigator.of(context).pop();
-                          } else {
-                            showSnackBar(context, 'Ocurrio algún fallo');
-                            Navigator.of(context).pop();
-                          }
-                        },
-                        child: const Text('Enviar'),
-                      ),
-                    ],
-                  ),
-                ],
-              );
-            });
+                        } else {
+                          showSnackBar(context, 'Ocurrio algún fallo');
+                          Navigator.of(context).pop();
+                        }
+                      },
+                      child: const Text('Enviar'),
+                    ),
+                  ],
+                ),
+              ],
+            );
+          },
+        );
       }
     }
   }

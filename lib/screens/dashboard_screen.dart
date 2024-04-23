@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:pmsn_07/services/firestore_chats.dart';
 import 'package:pmsn_07/services/firestore_user.dart';
 import 'package:pmsn_07/util/snackbar.dart';
+import 'package:zego_uikit_prebuilt_call/zego_uikit_prebuilt_call.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -90,38 +91,45 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         } else {
                           final userData = userSnapshot.data!;
                           return Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               ListTile(
                                 leading: ClipOval(
-                                    child: Image.network(
-                                  userData['imgProfile'],
-                                  width: 43,
-                                  height: 43,
-                                  fit: BoxFit.cover,
-                                )),
+                                  child: Image.network(
+                                    userData['imgProfile'],
+                                    width: 43,
+                                    height: 43,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
                                 title: Text(
                                   userData['name'],
                                   style: const TextStyle(
                                       color: Color.fromRGBO(246, 237, 220, 1)),
                                 ),
+
                                 // subtitle: Text(
                                 //   chat['lastMessage'],
                                 //   style: const TextStyle(color: Color.fromRGBO(189, 214, 210, 1)),
                                 // ),
-                                // trailing: Text(
-                                //   chat['time'],
-                                //   style: const TextStyle(color: Color.fromRGBO(189, 214, 210, 1)),
+                                // trailing: Container(
+                                //   child: actionButton(true),
                                 // ),
                                 onTap: () {
                                   print(
-                                      "chatID: ${chat['chatID']} \n userID: ${auth} \n name: ${userData['name']}");
+                                      "chatID: ${chat['chatID']} \n userID: ${chat['participant1']} \n name: ${chat['participant2']}");
                                   // Aquí puedes manejar la navegación al chat específico
-                                  Navigator.pushNamed(context, "/messages",
-                                      arguments: {
-                                        'chatID': chat['chatID'],
-                                        'userID': auth,
-                                        'name': userData['name']
-                                      });
+                                  Navigator.pushNamed(
+                                    context,
+                                    "/messages",
+                                    arguments: {
+                                      'chatID': chat['chatID'],
+                                      'userID': auth,
+                                      'name': userData['name'],
+                                      'userID1': chat['participant1'],
+                                      'userID2': chat['participant2']
+                                    },
+                                  );
                                 },
                               ),
                               _buildCustomDivider(),
@@ -181,6 +189,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
     );
   }
+
+  ZegoSendCallInvitationButton actionButton(bool isVideo) =>
+      ZegoSendCallInvitationButton(
+        isVideoCall: isVideo,
+        resourceID: "zegouikit_call",
+        invitees: [
+          ZegoUIKitUser(
+            id: "userData['name']",
+            name: "userData['name']",
+          ),
+        ],
+      );
 
   Widget _buildCustomDivider() {
     return Container(

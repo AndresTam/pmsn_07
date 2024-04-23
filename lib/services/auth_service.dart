@@ -3,6 +3,15 @@ import 'package:firebase_auth/firebase_auth.dart';
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
+  // static UserModel? _currentUser;
+  // static UserModel get currentUser {
+  //   if (_currentUser == null) {
+  //     throw Exception(
+  //         '_currentUserModel must not be null when calling this getter');
+  //   }
+  //   return _currentUser!;
+  // }
+
   Future createAcount(String email, String password) async {
     try {
       UserCredential userCredential = await FirebaseAuth.instance
