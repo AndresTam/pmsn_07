@@ -160,8 +160,8 @@ class _MessagesScreenState extends State<MessagesScreen> {
                         final isMe = message['sender'] == args?['userID'];
                         return _buildMessage(
                             message['message'],
-                            isMe, 
-                            message['type'], 
+                            isMe,
+                            message['type'],
                             message['date'],
                             args?['chatID'],
                             userID,
@@ -179,10 +179,6 @@ class _MessagesScreenState extends State<MessagesScreen> {
     );
   }
 
-  Widget _buildMessage(String text, bool isMe, String type, String date, arg) {
-    DateTime dateTime = DateTime.parse(date);
-    DateFormat dateFormat = DateFormat.Hm();
-    String formattedTime = dateFormat.format(dateTime);
   actionButton(bool isVideo, String nameReceptor, String IDReceptor,
           String nameReceiver, String IDReceiver) =>
       ZegoSendCallInvitationButton(
@@ -200,8 +196,11 @@ class _MessagesScreenState extends State<MessagesScreen> {
         ],
       );
 
-  Widget _buildMessage(String text, bool isMe, String type, String chatID,
-      String userID, String userName) {
+  Widget _buildMessage(String text, bool isMe, String type, String date,
+      String chatID, String userID, String userName) {
+    DateTime dateTime = DateTime.parse(date);
+    DateFormat dateFormat = DateFormat.Hm();
+    String formattedTime = dateFormat.format(dateTime);
     if (type == 'text') {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 5.0),
@@ -215,7 +214,8 @@ class _MessagesScreenState extends State<MessagesScreen> {
           ),
           padding: const EdgeInsets.all(10.0),
           child: Column(
-            crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+            crossAxisAlignment:
+                isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
             children: [
               Text(
                 text,
