@@ -9,11 +9,13 @@ Future<void> createEngine() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Get your AppID and AppSign from ZEGOCLOUD Console
   //[My Projects -> AppID] : https://console.zegocloud.com/project
-  await ZegoExpressEngine.createEngineWithProfile(ZegoEngineProfile(
-    Statics.appID,
-    ZegoScenario.Default,
-    appSign: Statics.appSign,
-  ));
+  await ZegoExpressEngine.createEngineWithProfile(
+    ZegoEngineProfile(
+      Statics.appID,
+      ZegoScenario.Default,
+      appSign: Statics.appSign,
+    ),
+  );
 }
 
 class LoginScreen extends StatelessWidget {

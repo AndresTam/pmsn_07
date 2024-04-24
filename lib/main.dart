@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:pmsn_07/common/static.dart';
 import 'package:pmsn_07/firebase_options.dart';
 import 'package:pmsn_07/screens/config_profile_screen.dart';
 import 'package:pmsn_07/screens/contacts_screen.dart';
@@ -14,8 +15,7 @@ import 'package:pmsn_07/screens/profile_registration.dart';
 import 'package:pmsn_07/screens/settings_screeen.dart';
 import 'package:pmsn_07/screens/singup_screen.dart';
 import 'package:pmsn_07/screens/splash_screen.dart';
-import 'package:zego_uikit_prebuilt_call/zego_uikit_prebuilt_call.dart';
-import 'package:zego_uikit_signaling_plugin/zego_uikit_signaling_plugin.dart';
+import 'package:zego_express_engine/zego_express_engine.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 void main() async {
@@ -24,17 +24,18 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  /// 1.1.2: set navigator key to ZegoUIKitPrebuiltCallInvitationService
-  ZegoUIKitPrebuiltCallInvitationService().setNavigatorKey(navigatorKey);
+  WidgetsFlutterBinding.ensureInitialized();
+  // Get your AppID and AppSign from ZEGOCLOUD Console
+  //[My Projects -> AppID] : https://console.zegocloud.com/project
+  await ZegoExpressEngine.createEngineWithProfile(
+    ZegoEngineProfile(
+      Statics.appID,
+      ZegoScenario.Default,
+      appSign: Statics.appSign,
+    ),
+  );
 
-  /// call the useSystemCallingUI
-  ZegoUIKit().initLog().then((value) {
-    ZegoUIKitPrebuiltCallInvitationService().useSystemCallingUI(
-      [ZegoUIKitSignalingPlugin()],
-    );
-
-    runApp(const MyApp());
-  });
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
