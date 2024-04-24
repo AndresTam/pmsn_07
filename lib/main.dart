@@ -1,6 +1,5 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:pmsn_07/common/widgets/call_invitation.dart';
 import 'package:pmsn_07/firebase_options.dart';
 import 'package:pmsn_07/screens/config_profile_screen.dart';
 import 'package:pmsn_07/screens/contacts_screen.dart';
@@ -61,7 +60,6 @@ class MyApp extends StatelessWidget {
         "/groupInfo": (BuildContext context) => const GroupInfoScreen(),
         "/groupCreation": (BuildContext context) => const GroupCreationScreen(),
         "/groupMessages": (BuildContext context) => const GroupsMessageScreen(),
-        "/call": (BuildContext context) => const CallInvitationPage(),
       },
     );
   }
