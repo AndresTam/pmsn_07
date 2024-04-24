@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:pmsn_07/services/firestore_chats.dart';
 import 'package:pmsn_07/services/firestore_user.dart';
 import 'package:pmsn_07/util/snackbar.dart';
-import 'package:zego_uikit_prebuilt_call/zego_uikit_prebuilt_call.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -17,6 +16,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final FirestoreUser _firestoreUser = FirestoreUser();
   final String auth = FirebaseAuth.instance.currentUser!.uid;
   final TextEditingController emailController = TextEditingController();
+  final Stream<List<Map<String, dynamic>>> _chatsStream =
+      FirestoreChats().getChatsStream();
+  final List<String> profesor = ['maestro', 'profesor', 'docente'];
+  final List<String> student = ['estudiante', 'alumno'];
+
+  Future<String?> getUserType() async {
+    final userData = await _firestoreUser.getUser(auth);
+    if (userData != null && userData.containsKey('position')) {
+      return userData['position'];
+    }
+
+    return null;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,183 +36,183 @@ class _DashboardScreenState extends State<DashboardScreen> {
       return chat['chatID'].contains(targetChatID);
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Chats',
-          style: TextStyle(color: Color.fromRGBO(246, 237, 220, 1)),
-        ),
-        backgroundColor: const Color.fromRGBO(88, 104, 117, 1),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(
-              Icons.add,
-              color: Color.fromRGBO(246, 237, 220, 1),
-            ), // Icono de suma (+)
-            onPressed: () {
-              _showNewChatBottomSheet(context);
-            },
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text(
+            'Chats',
+            style: TextStyle(color: Color.fromRGBO(246, 237, 220, 1)),
           ),
-        ],
-      ),
-      body: Container(
-        decoration: const BoxDecoration(
-          color: Color.fromRGBO(88, 104, 117, 1),
-        ),
-        child: FutureBuilder<List<Map<String, dynamic>>>(
-            future: _firestoreChats.getChats(),
-            builder: (BuildContext context,
-                AsyncSnapshot<List<Map<String, dynamic>>> snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              } else if (snapshot.hasError) {
-                return Center(child: Text('Error: ${snapshot.error}'));
-              } else {
-                final chatsList = snapshot.data ?? [];
-                final targetChatID =
-                    auth; // Especifica el chat ID que deseas buscar
-
-                // Filtra la lista para incluir solo los chats que cumplan la condición
-                final filteredChatsList = chatsList
-                    .where((chat) => shouldIncludeChat(chat, targetChatID))
-                    .toList();
-                return ListView.builder(
-                  itemCount: filteredChatsList.length,
-                  itemBuilder: (BuildContext context, int index) {
-                    final chat = filteredChatsList[index];
-                    var userID = '';
-                    if (chat['participant1'] == auth) {
-                      userID = chat['participant2'];
-                    } else if (chat['participant2'] == auth) {
-                      userID = chat['participant1'];
-                    }
-                    return FutureBuilder<Map<String, dynamic>?>(
-                      future: _firestoreUser.getUser(userID),
-                      builder: (BuildContext context,
-                          AsyncSnapshot<Map<String, dynamic>?> userSnapshot) {
-                        if (userSnapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return const ListTile(
-                            title: Text('Loading...'),
-                          );
-                        } else if (userSnapshot.hasError) {
-                          return const ListTile(
-                            title: Text('Error loading user'),
-                          );
-                        } else {
-                          final userData = userSnapshot.data!;
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              ListTile(
-                                leading: ClipOval(
-                                  child: Image.network(
-                                    userData['imgProfile'],
-                                    width: 43,
-                                    height: 43,
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                                title: Text(
-                                  userData['name'],
-                                  style: const TextStyle(
-                                      color: Color.fromRGBO(246, 237, 220, 1)),
-                                ),
-
-                                // subtitle: Text(
-                                //   chat['lastMessage'],
-                                //   style: const TextStyle(color: Color.fromRGBO(189, 214, 210, 1)),
-                                // ),
-                                // trailing: Container(
-                                //   child: actionButton(true),
-                                // ),
-                                onTap: () {
-                                  print(
-                                      "chatID: ${chat['chatID']} \n userID: ${chat['participant1']} \n name: ${chat['participant2']}");
-                                  // Aquí puedes manejar la navegación al chat específico
-                                  Navigator.pushNamed(
-                                    context,
-                                    "/messages",
-                                    arguments: {
-                                      'chatID': chat['chatID'],
-                                      'userID': auth,
-                                      'name': userData['name'],
-                                      'userID1': chat['participant1'],
-                                      'userID2': chat['participant2']
-                                    },
-                                  );
-                                },
-                              ),
-                              _buildCustomDivider(),
-                            ],
-                          );
-                        }
-                      },
-                    );
-                  },
-                );
-              }
-            }),
-      ),
-      bottomNavigationBar: BottomAppBar(
-        color: const Color.fromARGB(
-            255, 50, 62, 71), // Color de fondo del menú inferior
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: <Widget>[
+          backgroundColor: const Color.fromRGBO(88, 104, 117, 1),
+          centerTitle: true,
+          automaticallyImplyLeading: false,
+          actions: [
             IconButton(
               icon: const Icon(
-                Icons.camera_alt,
+                Icons.add,
                 color: Color.fromRGBO(246, 237, 220, 1),
-              ),
-              onPressed: () {
-                // Implementar acción de cámara
-              },
-            ),
-            IconButton(
-              icon: const Icon(
-                Icons.chat,
-                color: Color.fromRGBO(246, 237, 220, 1),
-              ),
-              onPressed: () {
-                setState(() {});
-                Navigator.pushNamed(context, "/dash");
-              },
-            ),
-            IconButton(
-              icon: const Icon(
-                Icons.settings,
-                color: Color.fromRGBO(246, 237, 220, 1),
-              ),
-              onPressed: () {
-                // Implementar acción de ajustes
-                Navigator.pushNamed(
-                  context,
-                  "/settings",
-                  arguments: {
-                    'userID': auth,
-                  },
-                );
+              ), // Icono de suma (+)
+              onPressed: () async {
+                final userType = await getUserType();
+                if (profesor.contains(userType!.toLowerCase())) {
+                  _showNewGroupBottomSheet(
+                      context); // Mostrar modal para profesor
+                } else if (student.contains(userType.toLowerCase())) {
+                  _showNewChatBottomSheet(context); // Mostrar modal para alumno
+                }
               },
             ),
           ],
         ),
+        body: Container(
+          decoration: const BoxDecoration(
+            color: Color.fromRGBO(88, 104, 117, 1),
+          ),
+          child: StreamBuilder<List<Map<String, dynamic>>>(
+              stream: _chatsStream,
+              builder: (BuildContext context,
+                  AsyncSnapshot<List<Map<String, dynamic>>> snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                } else {
+                  final chatsList = snapshot.data ?? [];
+                  final targetChatID =
+                      auth; // Especifica el chat ID que deseas buscar
+
+                  // Filtra la lista para incluir solo los chats que cumplan la condición
+                  final filteredChatsList = chatsList
+                      .where((chat) => shouldIncludeChat(chat, targetChatID))
+                      .toList();
+
+                  return ListView.builder(
+                    itemCount: filteredChatsList.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      final chat = filteredChatsList[index];
+                      var userID = '';
+                      if (chat['participant1'] == auth) {
+                        userID = chat['participant2'];
+                      } else if (chat['participant2'] == auth) {
+                        userID = chat['participant1'];
+                      }
+                      return FutureBuilder<Map<String, dynamic>?>(
+                        future: _firestoreUser.getUser(userID),
+                        builder: (BuildContext context,
+                            AsyncSnapshot<Map<String, dynamic>?> userSnapshot) {
+                          if (userSnapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return const ListTile(
+                              title: Text('Loading...'),
+                            );
+                          } else if (userSnapshot.hasError) {
+                            return const ListTile(
+                              title: Text('Error loading user'),
+                            );
+                          } else {
+                            final userData = userSnapshot.data!;
+                            return Column(
+                              children: [
+                                ListTile(
+                                  leading: ClipOval(
+                                      child: Image.network(
+                                    userData['imgProfile'],
+                                    width: 43,
+                                    height: 43,
+                                    fit: BoxFit.cover,
+                                  )),
+                                  title: Text(
+                                    userData['name'],
+                                    style: const TextStyle(
+                                        color:
+                                            Color.fromRGBO(246, 237, 220, 1)),
+                                  ),
+                                  // subtitle: Text(
+                                  //   chat['lastMessage'],
+                                  //   style: const TextStyle(color: Color.fromRGBO(189, 214, 210, 1)),
+                                  // ),
+                                  // trailing: Text(
+                                  //   chat['time'],
+                                  //   style: const TextStyle(color: Color.fromRGBO(189, 214, 210, 1)),
+                                  // ),
+                                  onTap: () {
+                                    Navigator.pushNamed(context, "/messages",
+                                        arguments: {
+                                          'chatID': chat['chatID'],
+                                          'userID': auth,
+                                          'name': userData['name'],
+                                          'userID1': chat['participant1'],
+                                          'userID2': chat['participant2']
+                                        });
+                                  },
+                                ),
+                                _buildCustomDivider(),
+                              ],
+                            );
+                          }
+                        },
+                      );
+                    },
+                  );
+                }
+              }),
+        ),
+        bottomNavigationBar: BottomAppBar(
+          color: const Color.fromARGB(
+              255, 50, 62, 71), // Color de fondo del menú inferior
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: <Widget>[
+              IconButton(
+                icon: const Icon(
+                  Icons.perm_contact_cal,
+                  color: Color.fromRGBO(246, 237, 220, 1),
+                ),
+                onPressed: () {
+                  Navigator.pushNamed(context, "/contacts");
+                },
+              ),
+              IconButton(
+                icon: const Icon(
+                  Icons.group,
+                  color: Color.fromRGBO(246, 237, 220, 1),
+                ),
+                onPressed: () {
+                  Navigator.pushNamed(context, "/groups");
+                },
+              ),
+              IconButton(
+                icon: const Icon(
+                  Icons.chat,
+                  color: Color.fromRGBO(246, 237, 220, 1),
+                ),
+                onPressed: () {
+                  setState(() {});
+                },
+              ),
+              IconButton(
+                icon: const Icon(
+                  Icons.settings,
+                  color: Color.fromRGBO(246, 237, 220, 1),
+                ),
+                onPressed: () {
+                  // Implementar acción de ajustes
+                  Navigator.pushNamed(
+                    context,
+                    "/settings",
+                    arguments: {
+                      'userID': auth,
+                    },
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
-
-  ZegoSendCallInvitationButton actionButton(bool isVideo) =>
-      ZegoSendCallInvitationButton(
-        isVideoCall: isVideo,
-        resourceID: "zegouikit_call",
-        invitees: [
-          ZegoUIKitUser(
-            id: "userData['name']",
-            name: "userData['name']",
-          ),
-        ],
-      );
 
   Widget _buildCustomDivider() {
     return Container(
@@ -214,16 +226,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void _showNewChatBottomSheet(BuildContext context) {
     showModalBottomSheet<void>(
       context: context,
-      isScrollControlled:
-          true, // Hacer que el BottomSheet ocupe toda la pantalla
+      isScrollControlled: true,
       builder: (BuildContext context) {
-        // Obtiene la altura total de la pantalla
         final screenHeight = MediaQuery.of(context).size.height;
-
-        // Establece una altura fija para el BottomSheet
-        final bottomSheetHeight =
-            screenHeight * 0.8; // Ejemplo: 80% de la pantalla
-
+        final bottomSheetHeight = screenHeight * 0.8;
         return Container(
           height: bottomSheetHeight,
           padding: const EdgeInsets.all(16),
@@ -254,12 +260,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ElevatedButton(
                   onPressed: () async {
                     Navigator.of(context).pop();
-                    print(emailController.text);
                     final String? userId = await _firestoreUser
                         .getUserIdFromEmail(emailController.text);
                     if (userId != auth && userId != '' && userId != '') {
                       final String chatId = auth + userId!;
-                      print(chatId);
                       _firestoreChats.createChat(chatId, auth, userId);
                     } else if (userId == auth) {
                       showSnackBar(
@@ -277,6 +281,94 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     'Empezar a chatear',
                     style: TextStyle(
                         fontSize: 20), // Ajusta el tamaño del texto del botón
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showNewGroupBottomSheet(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (BuildContext context) {
+        final screenHeight = MediaQuery.of(context).size.height;
+        final bottomSheetHeight = screenHeight * 0.8;
+        return Container(
+          height: bottomSheetHeight,
+          padding: const EdgeInsets.all(16),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'Nuevo Chat',
+                  style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                TextField(
+                  controller: emailController,
+                  decoration: InputDecoration(
+                    hintText: 'Introduce el correo electrónico',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () async {
+                    Navigator.of(context).pop();
+                    final String? userId = await _firestoreUser
+                        .getUserIdFromEmail(emailController.text);
+                    if (userId != auth && userId != '' && userId != '') {
+                      final String chatId = auth + userId!;
+                      _firestoreChats.createChat(chatId, auth, userId);
+                    } else if (userId == auth) {
+                      showSnackBar(
+                          context, 'No puedes enviarte mensajes a ti mismo');
+                    } else {
+                      showSnackBar(
+                          context, 'Hubo un error, intentalo de nuevo');
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                  child: const Text(
+                    'Empezar a chatear',
+                    style: TextStyle(fontSize: 20),
+                  ),
+                ),
+                const SizedBox(height: 30),
+                const Text(
+                  'O',
+                  style: TextStyle(
+                    fontSize: 20,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () async {
+                    Navigator.of(context).pop();
+                    Navigator.pushNamed(context, "/groupInfo");
+                  },
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                  child: const Text(
+                    'Crear Grupo',
+                    style: TextStyle(fontSize: 20),
                   ),
                 ),
               ],

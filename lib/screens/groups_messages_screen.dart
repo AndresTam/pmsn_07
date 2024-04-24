@@ -1,23 +1,23 @@
 import 'dart:io';
-
-import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:pmsn_07/services/firestore_messages.dart';
-import 'package:pmsn_07/services/firestore_user.dart';
+import 'package:flutter/material.dart';
 import 'package:pmsn_07/services/storage_service.dart';
 import 'package:pmsn_07/util/select_file.dart';
 import 'package:pmsn_07/util/snackbar.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:pmsn_07/services/firestore_user.dart';
+import 'package:pmsn_07/services/firestore_messages.dart';
 import 'package:video_player/video_player.dart';
-import 'package:zego_uikit_prebuilt_call/zego_uikit_prebuilt_call.dart';
 
-class MessagesScreen extends StatefulWidget {
-  const MessagesScreen({Key? key}) : super(key: key);
+class GroupsMessageScreen extends StatefulWidget {
+  const GroupsMessageScreen({super.key});
 
   @override
-  State<MessagesScreen> createState() => _MessagesScreenState();
+  State<GroupsMessageScreen> createState() => _GroupsMessageScreenState();
 }
 
-class _MessagesScreenState extends State<MessagesScreen> {
+class _GroupsMessageScreenState extends State<GroupsMessageScreen> {
+  final String auth = FirebaseAuth.instance.currentUser!.uid;
   final FirestoreMessage _firestoreMessage = FirestoreMessage();
   final FirestoreUser _firestoreUser = FirestoreUser();
   final TextEditingController _messageController = TextEditingController();
@@ -25,7 +25,6 @@ class _MessagesScreenState extends State<MessagesScreen> {
   VideoPlayerController? _videoPlayerController;
   final Map<String, VideoPlayerController> _videoControllers = {};
   late Stream<List<Map<String, dynamic>>> _messagesStream;
-  //late String? _chatID;
   File? imageToUpload;
 
   @override
@@ -33,7 +32,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
     super.initState();
   }
 
-  @override
+   @override
   void dispose() {
     _messageController.dispose();
     _scrollController.dispose();
@@ -49,15 +48,14 @@ class _MessagesScreenState extends State<MessagesScreen> {
     if (messageText.isNotEmpty) {
       DateTime now = DateTime.now();
       String formattedDateTime = DateFormat('yyyy-MM-dd HH:mm:ss').format(now);
-      _firestoreMessage.createMessage(args?['chatID'], messageText,
-          args?['userID'], formattedDateTime, type);
+      _firestoreMessage.createMessage(args?['groupID'], messageText, auth, formattedDateTime, type);
       _messageController.clear();
       FocusScope.of(context).unfocus();
       _scrollToBottom(0);
       setState(() {});
     }
   }
-
+  
   void _scrollToBottom(int length) {
     if (_scrollController.hasClients) {
       _scrollController.animateTo(
@@ -88,84 +86,60 @@ class _MessagesScreenState extends State<MessagesScreen> {
     }
   }
 
+  Future<Map<String, dynamic>> _getUserData(String userID) async {
+    Map<String, dynamic>? userData = await _firestoreUser.getUser(userID);
+    return userData ?? {};
+  }
+
   @override
   Widget build(BuildContext context) {
-    final Map<String, dynamic>? args =
-        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-    _messagesStream = _firestoreMessage.getMessagesStream(args?['chatID']);
-    String userID = args?['userID1'];
-    String? UserName;
-    // bool shouldIncludeChat(Map<String, dynamic> messages, String targetChatID) {
-    //   return messages['chatID'].contains(targetChatID);
-    // }
+    final Map<String, dynamic>? args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    _messagesStream = _firestoreMessage.getMessagesStream(args?['groupID']);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          args?['name'] ?? 'Chat',
-          style: const TextStyle(color: Color.fromRGBO(246, 237, 220, 1)),
-        ),
-        backgroundColor: Color.fromARGB(255, 0, 140, 255),
-        actions: [
-          IconButton(
-            onPressed: () async {
-              UserName = await _firestoreUser.getUserNameByID(userID);
-              print(
-                  "nombre Receptor: ${args!['name'].toString()} \n chatID: ${args['userID2'].toString()} \n name:${UserName.toString()}");
-              _sendMessage(
-                  args, 'videoCall', "llamada de ${UserName.toString()}");
-              // video call button
-              actionButton(
-                true,
-                UserName.toString(),
-                args['userID1'].toString(),
-                args['name'].toString(),
-                args['userID2'].toString(),
-              );
-            },
-            icon: const Icon(Icons.phone),
-          ),
-        ],
+        title: Text(args?['name'] ?? 'HOLA'),
+        backgroundColor: const Color.fromRGBO(88, 104, 117, 1),
       ),
       body: Container(
         color: const Color.fromRGBO(88, 104, 117, 1),
         child: Column(
           children: [
-            // TopBar(
-            //   upperTitle: 'Welcome back,',
-            //   title: args?['name'],
-            // ),
             Expanded(
               child: StreamBuilder<List<Map<String, dynamic>>>(
                 stream: _messagesStream,
-                builder: (BuildContext context,
-                    AsyncSnapshot<List<Map<String, dynamic>>> snapshot) {
+                builder: (BuildContext context, AsyncSnapshot<List<Map<String, dynamic>>> snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
                   } else if (snapshot.hasError) {
                     return Center(child: Text('Error: ${snapshot.error}'));
                   } else {
-                    List<Map<String, dynamic>> messagesList =
-                        snapshot.data ?? [];
-                    // Ordenar la lista por fecha de manera descendente
+                    final messagesList = snapshot.data ?? [];
                     messagesList.sort((a, b) => b['date'].compareTo(a['date']));
                     return ListView.builder(
-                      reverse:
-                          true, // Invertir la lista para que los elementos se muestren en orden descendente
-                      controller:
-                          _scrollController, // Usar un controlador para desplazar automáticamente al final
+                      controller: _scrollController,
+                      reverse: true, // Mostrar los mensajes más recientes al final
                       itemCount: messagesList.length,
                       itemBuilder: (BuildContext context, int index) {
                         final message = messagesList[index];
-                        final isMe = message['sender'] == args?['userID'];
-                        return _buildMessage(
-                            message['message'],
-                            isMe, 
-                            message['type'], 
-                            message['date'],
-                            args?['chatID'],
-                            userID,
-                            UserName.toString());
+                        return FutureBuilder<Map<String, dynamic>>(
+                          future: _getUserData(message['sender']),
+                          builder: (context, userSnapshot) {
+                            if (userSnapshot.connectionState == ConnectionState.waiting) {
+                              return const ListTile(
+                                title: Text('Loading...'),
+                              );
+                            }
+                            if (userSnapshot.hasData) {
+                              final userData = userSnapshot.data!;
+                              final bool isMe = message['sender'] == auth;
+                              return _buildMessage(message, userData, isMe);
+                            }
+                            return const ListTile(
+                              title: Text('User Not Found'),
+                            );
+                          },
+                        );
                       },
                     );
                   }
@@ -179,137 +153,84 @@ class _MessagesScreenState extends State<MessagesScreen> {
     );
   }
 
-  Widget _buildMessage(String text, bool isMe, String type, String date, arg) {
-    DateTime dateTime = DateTime.parse(date);
+  Widget _buildMessage(Map<String, dynamic> message, Map<String, dynamic> userData, bool isMe) {
+    DateTime dateTime = DateTime.parse(message['date']);
     DateFormat dateFormat = DateFormat.Hm();
     String formattedTime = dateFormat.format(dateTime);
-  actionButton(bool isVideo, String nameReceptor, String IDReceptor,
-          String nameReceiver, String IDReceiver) =>
-      ZegoSendCallInvitationButton(
-        isVideoCall: isVideo,
-        resourceID: "zego_call",
-        invitees: [
-          ZegoUIKitUser(
-            id: nameReceiver,
-            name: IDReceiver,
-          ),
-          ZegoUIKitUser(
-            id: IDReceptor,
-            name: nameReceptor,
+    late Widget messageWidget;
+    if (message['type'] == 'text') {
+      // Mensaje de texto
+      messageWidget = Text(
+        message['message'],
+        style: const TextStyle(fontSize: 16),
+      );
+    } else if (message['type'] == 'image') {
+      messageWidget = ClipRRect(
+        borderRadius: BorderRadius.circular(
+            10.0), // Ajusta el radio según lo que necesites
+        child: Image.network(
+          message['message'],
+          width: 200, // Ancho de la imagen
+          height: 200, // Alto de la imagen
+          fit: BoxFit
+              .cover, // Ajusta la forma en que la imagen se ajusta al contenedor
+        ),
+      );
+    } else if (message['type'] == 'video') {
+      messageWidget = ClipRRect(
+        borderRadius: BorderRadius.circular(10.0),
+        child: _buildVideoMessage(message['message'], isMe),
+      );
+    }
+    final messageContent = Container(
+      decoration: BoxDecoration(
+        color: isMe ? Colors.lightBlueAccent : Colors.grey[300],
+        borderRadius: BorderRadius.circular(8.0),
+      ),
+      padding: const EdgeInsets.all(12.0),
+      child: Column(
+        crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        children: [
+          if (!isMe)
+            Text(
+              userData['name'] ?? 'Unknown',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          const SizedBox(height: 4),
+          messageWidget,
+          const SizedBox(height: 4),
+          Text(
+            formattedTime, // Replace with actual timestamp
+            style: const TextStyle(fontSize: 12, color: Colors.grey),
           ),
         ],
-      );
-
-  Widget _buildMessage(String text, bool isMe, String type, String chatID,
-      String userID, String userName) {
-    if (type == 'text') {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 5.0),
-        alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-        child: Container(
-          decoration: BoxDecoration(
-            color: isMe
-                ? const Color.fromRGBO(165, 200, 202, 1)
-                : const Color.fromRGBO(246, 237, 220, 1),
-            borderRadius: BorderRadius.circular(20.0),
-          ),
-          padding: const EdgeInsets.all(10.0),
-          child: Column(
-            crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-            children: [
-              Text(
-                text,
-                style: const TextStyle(fontSize: 16.0),
-              ),
-              Text(
-                formattedTime, // Replace with actual timestamp
-                style: const TextStyle(fontSize: 12, color: Colors.grey),
-              ),
-            ],
-          ),
-        ),
-      );
-    } else if (type == 'image') {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 5.0),
-        alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-        child: Container(
-            decoration: BoxDecoration(
-              color: isMe
-                  ? const Color.fromRGBO(165, 200, 202, 1)
-                  : const Color.fromRGBO(246, 237, 220, 1),
-              borderRadius: BorderRadius.circular(20.0),
-            ),
-            padding: const EdgeInsets.all(10.0),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(
-                  10.0), // Ajusta el radio según lo que necesites
-              child: Image.network(
-                text,
-                width: 200, // Ancho de la imagen
-                height: 200, // Alto de la imagen
-                fit: BoxFit
-                    .cover, // Ajusta la forma en que la imagen se ajusta al contenedor
-              ),
-            )),
-      );
-    } else if (type == 'video') {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 5.0),
-        alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-        child: Container(
-          decoration: BoxDecoration(
-            color: isMe
-                ? const Color.fromRGBO(165, 200, 202, 1)
-                : const Color.fromRGBO(246, 237, 220, 1),
-            borderRadius: BorderRadius.circular(20.0),
-          ),
-          padding: const EdgeInsets.all(10.0),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(10.0),
-            child: _buildVideoMessage(text, isMe),
-          ),
-        ),
-      );
-    } else if (type == 'videoCall') {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 5.0),
-        alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-        child: Container(
-          decoration: BoxDecoration(
-            color: isMe
-                ? const Color.fromRGBO(165, 200, 202, 1)
-                : const Color.fromRGBO(246, 237, 220, 1),
-            borderRadius: BorderRadius.circular(20.0),
-          ),
-          padding: const EdgeInsets.all(10.0),
-          child: isMe
-              ? Text("Llamada")
-              : ElevatedButton(
-                  onPressed: () {
-                    print(
-                        "callID: ${chatID}\n userID1: ${userID} \n username: ${userName}");
-                    Navigator.pushNamed(
-                      context,
-                      "/call",
-                      arguments: {
-                        'callID': chatID,
-                        'userID1': userID,
-                        'username': userName,
-                        'input': 0,
-                      },
-                    );
-                  },
-                  child: const Text('Llamada..'),
+      ),
+    );
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 4.0),
+      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+        child: Wrap(
+          alignment: isMe ? WrapAlignment.end : WrapAlignment.start,
+          children: [
+            if (!isMe)
+              ClipOval(
+                child: Image.network(
+                  userData['imgProfile'],
+                  width: 20,
+                  height: 20,
+                  fit: BoxFit.cover,
                 ),
+              ),
+            const SizedBox(width: 8), // Espacio entre la imagen y el mensaje
+            IntrinsicWidth(child: messageContent),
+          ],
         ),
-      );
-    } else {
-      return Container();
-    }
+      ),
+    );
   }
 
-  // Método para construir mensajes de video
   Widget _buildVideoMessage(String videoUrl, bool isMe) {
     VideoPlayerController videoController =
         VideoPlayerController.networkUrl(Uri.parse(videoUrl));
@@ -363,8 +284,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                 color: Color.fromRGBO(246, 237, 220, 1),
               ),
               onPressed: () {
-                _showBottomSheet(
-                    context, args); // Mostrar la BottomSheet al hacer clic
+                _showBottomSheet(context, args);
               },
             ),
             IconButton(
@@ -372,8 +292,9 @@ class _MessagesScreenState extends State<MessagesScreen> {
                 Icons.send,
                 color: Color.fromRGBO(246, 237, 220, 1),
               ),
-              onPressed: () =>
-                  _sendMessage(args, 'text', _messageController.text.trim()),
+              onPressed: () =>{
+                 _sendMessage(args, 'text', _messageController.text.trim()),
+              }
             ),
           ],
         ),
@@ -469,7 +390,6 @@ class _MessagesScreenState extends State<MessagesScreen> {
       },
     );
   }
-
   Future<void> _showImageDialog(
       BuildContext context, Map<String, dynamic>? args, String type) async {
     if (imageToUpload != null && type == 'image') {
@@ -496,7 +416,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                       final String fileName =
                           imageToUpload!.path.split("/").last;
                       final uploadedImage = await uploadChatImage(
-                          imageToUpload!, 'chats', args?['chatID'], fileName);
+                          imageToUpload!, 'chats', args?['groupID'], fileName);
                       if (uploadedImage.isNotEmpty) {
                         _sendMessage(args, 'image', uploadedImage);
                         showSnackBar(context, 'Archivo Enviado');
@@ -547,7 +467,10 @@ class _MessagesScreenState extends State<MessagesScreen> {
                         final String fileName =
                             imageToUpload!.path.split("/").last;
                         final uploadedImage = await uploadChatVideo(
-                            imageToUpload!, 'chats', args?['chatID'], fileName);
+                            imageToUpload!,
+                            'chats',
+                            args?['groupID'],
+                            fileName);
                         if (uploadedImage.isNotEmpty) {
                           _sendMessage(args, 'video', uploadedImage);
                           showSnackBar(context, 'Archivo Enviado');
@@ -563,7 +486,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                 ),
               ],
             );
-          },
+          }
         );
       }
     }

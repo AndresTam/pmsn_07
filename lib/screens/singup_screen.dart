@@ -9,7 +9,7 @@ class SingupScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final AuthService auth = AuthService();
     final GlobalKey<FormState> validationForm = GlobalKey<FormState>();
-    RegExp emailVal = RegExp(r'^[0-9]{8}@itcelaya\.edu\.mx$');
+    RegExp emailVal = RegExp(r'^.*@itcelaya\.edu\.mx$');
     RegExp passwordVal = RegExp(r'^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#\$&*~]).{8,16}$');
 
     final TextEditingController emailController = TextEditingController();

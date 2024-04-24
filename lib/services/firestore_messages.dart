@@ -45,4 +45,19 @@ class FirestoreMessage{
         .snapshots()
         .map((snapshot) => snapshot.docs.map((doc) => doc.data()).toList());
   }
+
+  Future<List<Map<String, dynamic>>> getMessagesForGroup(String groupId) async {
+    try {
+      QuerySnapshot querySnapshot = await _messagesCollection.where('chatID', isEqualTo: groupId).get();
+      List<Map<String, dynamic>> messagesList = [];
+      querySnapshot.docs.forEach((doc) {
+        Map<String, dynamic> messageData = doc.data() as Map<String, dynamic>;
+        messagesList.add(messageData);
+      });
+      return messagesList;
+    } catch (e) {
+      print('Error getting messages for group: $e');
+      return [];
+    }
+  }
 }
