@@ -3,8 +3,18 @@ import 'package:pmsn_07/common/static.dart';
 import 'package:pmsn_07/services/auth_service.dart';
 import 'package:pmsn_07/services/firestore_user.dart';
 import 'package:pmsn_07/util/snackbar.dart';
-import 'package:zego_uikit_prebuilt_call/zego_uikit_prebuilt_call.dart';
-import 'package:zego_uikit_signaling_plugin/zego_uikit_signaling_plugin.dart';
+import 'package:zego_express_engine/zego_express_engine.dart';
+
+Future<void> createEngine() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // Get your AppID and AppSign from ZEGOCLOUD Console
+  //[My Projects -> AppID] : https://console.zegocloud.com/project
+  await ZegoExpressEngine.createEngineWithProfile(ZegoEngineProfile(
+    Statics.appID,
+    ZegoScenario.Default,
+    appSign: Statics.appSign,
+  ));
+}
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -83,13 +93,7 @@ class LoginScreen extends StatelessWidget {
                 await _firestoreUser.getUserIdFromEmail(emailController.text);
             print("userID: ${userID}");
 
-            ZegoUIKitPrebuiltCallInvitationService().init(
-              appID: Statics.appID,
-              appSign: Statics.appSign,
-              userID: userID.toString(),
-              userName: emailController.text,
-              plugins: [ZegoUIKitSignalingPlugin()],
-            );
+            await createEngine();
 
             Navigator.pushNamed(context, "/dash");
           }

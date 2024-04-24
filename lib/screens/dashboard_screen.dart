@@ -112,6 +112,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             );
                           } else {
                             final userData = userSnapshot.data!;
+                            print(userData);
                             return Column(
                               children: [
                                 ListTile(

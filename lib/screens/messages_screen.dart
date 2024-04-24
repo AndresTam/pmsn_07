@@ -2,13 +2,13 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:pmsn_07/common/call_page.dart';
 import 'package:pmsn_07/services/firestore_messages.dart';
 import 'package:pmsn_07/services/firestore_user.dart';
 import 'package:pmsn_07/services/storage_service.dart';
 import 'package:pmsn_07/util/select_file.dart';
 import 'package:pmsn_07/util/snackbar.dart';
 import 'package:video_player/video_player.dart';
-import 'package:zego_uikit_prebuilt_call/zego_uikit_prebuilt_call.dart';
 
 class MessagesScreen extends StatefulWidget {
   const MessagesScreen({Key? key}) : super(key: key);
@@ -95,6 +95,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
     _messagesStream = _firestoreMessage.getMessagesStream(args?['chatID']);
     String userID = args?['userID1'];
     String? UserName;
+
     // bool shouldIncludeChat(Map<String, dynamic> messages, String targetChatID) {
     //   return messages['chatID'].contains(targetChatID);
     // }
@@ -109,18 +110,19 @@ class _MessagesScreenState extends State<MessagesScreen> {
         actions: [
           IconButton(
             onPressed: () async {
-              UserName = await _firestoreUser.getUserNameByID(userID);
+              UserName = await _firestoreUser.getUserNameByID(args!['userID1']);
               print(
-                  "nombre Receptor: ${args!['name'].toString()} \n chatID: ${args['userID2'].toString()} \n name:${UserName.toString()}");
+                  "userID1: ${args!['userID1'].toString()} \n chatID: ${args['chatID'].toString()} \n name:${UserName.toString()}");
+
               _sendMessage(
                   args, 'videoCall', "llamada de ${UserName.toString()}");
               // video call button
-              actionButton(
-                true,
-                UserName.toString(),
-                args['userID1'].toString(),
-                args['name'].toString(),
-                args['userID2'].toString(),
+
+              jumpToCallPage(
+                context,
+                roomID: args['chatID'].toString(),
+                localUserID: args['userID1'].toString(),
+                localUserName: UserName.toString(),
               );
             },
             icon: const Icon(Icons.phone),
@@ -149,6 +151,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                         snapshot.data ?? [];
                     // Ordenar la lista por fecha de manera descendente
                     messagesList.sort((a, b) => b['date'].compareTo(a['date']));
+
                     return ListView.builder(
                       reverse:
                           true, // Invertir la lista para que los elementos se muestren en orden descendente
@@ -158,6 +161,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                       itemBuilder: (BuildContext context, int index) {
                         final message = messagesList[index];
                         final isMe = message['sender'] == args?['userID'];
+
                         return _buildMessage(
                             message['message'],
                             isMe,
@@ -178,23 +182,6 @@ class _MessagesScreenState extends State<MessagesScreen> {
       ),
     );
   }
-
-  actionButton(bool isVideo, String nameReceptor, String IDReceptor,
-          String nameReceiver, String IDReceiver) =>
-      ZegoSendCallInvitationButton(
-        isVideoCall: isVideo,
-        resourceID: "zego_call",
-        invitees: [
-          ZegoUIKitUser(
-            id: nameReceiver,
-            name: IDReceiver,
-          ),
-          ZegoUIKitUser(
-            id: IDReceptor,
-            name: nameReceptor,
-          ),
-        ],
-      );
 
   Widget _buildMessage(String text, bool isMe, String type, String date,
       String chatID, String userID, String userName) {
@@ -286,18 +273,28 @@ class _MessagesScreenState extends State<MessagesScreen> {
           child: isMe
               ? Text("Llamada")
               : ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
+                    String? UserName =
+                        await _firestoreUser.getUserNameByID(userID.toString());
                     print(
-                        "callID: ${chatID}\n userID1: ${userID} \n username: ${userName}");
-                    Navigator.pushNamed(
+                        "callID: ${chatID}\n userID1: ${userID} \n username: ${UserName}");
+
+                    // jumpToCallPage(
+                    //   context,
+                    //   roomID: chatID.toString(),
+                    //   localUserID: userID.toString(),
+                    //   localUserName: userName.toString(),
+                    // );
+
+                    Navigator.push(
                       context,
-                      "/call",
-                      arguments: {
-                        'callID': chatID,
-                        'userID1': userID,
-                        'username': userName,
-                        'input': 0,
-                      },
+                      MaterialPageRoute(
+                        builder: (context) => CallPage(
+                          roomID: chatID,
+                          localUserID: userID.toString(),
+                          localUserName: UserName.toString(),
+                        ),
+                      ),
                     );
                   },
                   child: const Text('Llamada..'),
@@ -567,5 +564,21 @@ class _MessagesScreenState extends State<MessagesScreen> {
         );
       }
     }
+  }
+
+  void jumpToCallPage(BuildContext context,
+      {required String roomID,
+      required String localUserID,
+      required String localUserName}) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CallPage(
+          localUserID: localUserID,
+          localUserName: localUserName,
+          roomID: roomID,
+        ),
+      ),
+    );
   }
 }
