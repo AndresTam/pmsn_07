@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pmsn_07/services/firestore_calls.dart';
 import 'package:zego_express_engine/zego_express_engine.dart';
 
 class CallPage extends StatefulWidget {
@@ -7,10 +8,14 @@ class CallPage extends StatefulWidget {
     required this.roomID,
     required this.localUserID,
     required this.localUserName,
+    required this.date,
+    required this.Organizador,
   });
   final String roomID;
   final String localUserID;
   final String localUserName;
+  final String date;
+  final int Organizador;
 
   @override
   State<CallPage> createState() => _CallPageState();
@@ -21,6 +26,8 @@ class _CallPageState extends State<CallPage> {
   int? localViewID;
   Widget? remoteView;
   int? remoteViewID;
+
+  final FirestoreCalls _firestoreCalls = FirestoreCalls();
 
   @override
   void initState() {
@@ -44,7 +51,7 @@ class _CallPageState extends State<CallPage> {
       appBar: AppBar(title: Text("Call Page ${roomID.toString()}")),
       body: Stack(
         children: [
-          localView ?? SizedBox.shrink(),
+          localView ?? const SizedBox.shrink(),
           Positioned(
             top: MediaQuery.of(context).size.height / 20,
             right: MediaQuery.of(context).size.width / 20,
@@ -71,8 +78,18 @@ class _CallPageState extends State<CallPage> {
                     style: ElevatedButton.styleFrom(
                         shape: const CircleBorder(),
                         backgroundColor: Colors.red),
-                    onPressed: () => Navigator.pop(context),
-                    child: const Center(child: Icon(Icons.call_end, size: 32)),
+                    onPressed: () {
+                      if (widget.Organizador == 1) {
+                        _firestoreCalls.updateCall(widget.roomID.toString(),
+                            widget.date.toString(), 'false');
+                        Navigator.pop(context);
+                      } else {
+                        Navigator.pop(context);
+                      }
+                    },
+                    child: const Center(
+                      child: Icon(Icons.call_end, size: 32),
+                    ),
                   ),
                 ],
               ),

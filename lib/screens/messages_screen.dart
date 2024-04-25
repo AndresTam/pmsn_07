@@ -1,8 +1,10 @@
 import 'dart:io';
 
+import 'package:art_sweetalert/art_sweetalert.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:pmsn_07/common/call_page.dart';
+import 'package:pmsn_07/services/firestore_calls.dart';
 import 'package:pmsn_07/services/firestore_messages.dart';
 import 'package:pmsn_07/services/firestore_user.dart';
 import 'package:pmsn_07/services/storage_service.dart';
@@ -20,6 +22,7 @@ class MessagesScreen extends StatefulWidget {
 class _MessagesScreenState extends State<MessagesScreen> {
   final FirestoreMessage _firestoreMessage = FirestoreMessage();
   final FirestoreUser _firestoreUser = FirestoreUser();
+  final FirestoreCalls _firestoreCalls = FirestoreCalls();
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   VideoPlayerController? _videoPlayerController;
@@ -93,7 +96,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
     final Map<String, dynamic>? args =
         ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
     _messagesStream = _firestoreMessage.getMessagesStream(args?['chatID']);
-    String userID = args?['userID1'];
+    String userID = args?['userID'];
     String? UserName;
 
     // bool shouldIncludeChat(Map<String, dynamic> messages, String targetChatID) {
@@ -110,19 +113,29 @@ class _MessagesScreenState extends State<MessagesScreen> {
         actions: [
           IconButton(
             onPressed: () async {
-              UserName = await _firestoreUser.getUserNameByID(args!['userID1']);
+              UserName = await _firestoreUser.getUserNameByID(args!['userID']);
               print(
                   "userID1: ${args!['userID1'].toString()} \n chatID: ${args['chatID'].toString()} \n name:${UserName.toString()}");
 
               _sendMessage(
                   args, 'videoCall', "llamada de ${UserName.toString()}");
+              DateTime now2 = DateTime.now();
+              String formattedDateTime2 =
+                  DateFormat('yyyy-MM-dd HH:mm:ss').format(now2);
               // video call button
-
+              _firestoreCalls.createCall(
+                  args['chatID'].toString(),
+                  "true",
+                  args['userID'].toString(),
+                  UserName.toString(),
+                  formattedDateTime2);
               jumpToCallPage(
                 context,
                 roomID: args['chatID'].toString(),
-                localUserID: args['userID1'].toString(),
+                localUserID: args['userID'].toString(),
                 localUserName: UserName.toString(),
+                date: formattedDateTime2,
+                Organizador: 1,
               );
             },
             icon: const Icon(Icons.phone),
@@ -168,7 +181,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                             message['type'],
                             message['date'],
                             args?['chatID'],
-                            userID,
+                            args?['userID'],
                             UserName.toString());
                       },
                     );
@@ -271,33 +284,64 @@ class _MessagesScreenState extends State<MessagesScreen> {
           ),
           padding: const EdgeInsets.all(10.0),
           child: isMe
-              ? Text("Llamada")
-              : ElevatedButton(
-                  onPressed: () async {
-                    String? UserName =
-                        await _firestoreUser.getUserNameByID(userID.toString());
-                    print(
-                        "callID: ${chatID}\n userID1: ${userID} \n username: ${UserName}");
+              ? Column(
+                  children: [
+                    const Text("Llamadando"),
+                    Text(
+                      formattedTime, // Replace with actual timestamp
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                  ],
+                )
+              : Column(
+                  children: [
+                    ElevatedButton(
+                      onPressed: () async {
+                        String? UserName = await _firestoreUser
+                            .getUserNameByID(userID.toString());
+                        String? CallEnable = await _firestoreCalls
+                            .getCallEnable(chatID.toString(), date.toString());
 
-                    // jumpToCallPage(
-                    //   context,
-                    //   roomID: chatID.toString(),
-                    //   localUserID: userID.toString(),
-                    //   localUserName: userName.toString(),
-                    // );
+                        print("${CallEnable}  ${CallEnable}");
+                        print(
+                            "callID: ${chatID}\n userID1: ${userID} \n username: ${UserName}");
+                        if (CallEnable == 'true') {
+                          jumpToCallPage(
+                            context,
+                            roomID: chatID,
+                            localUserID: "ID_${userID}",
+                            localUserName: UserName.toString(),
+                            date: date,
+                            Organizador: 0,
+                          );
+                        } else {
+                          ArtSweetAlert.show(
+                            context: context,
+                            artDialogArgs: ArtDialogArgs(
+                                type: ArtSweetAlertType.info,
+                                title: "Llamada ya finalizada.....",
+                                text: "Puede volver a llamarlo"),
+                          );
+                        }
 
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => CallPage(
-                          roomID: chatID,
-                          localUserID: userID.toString(),
-                          localUserName: UserName.toString(),
-                        ),
-                      ),
-                    );
-                  },
-                  child: const Text('Llamada..'),
+                        // Navigator.push(
+                        //   context,
+                        //   MaterialPageRoute(
+                        //     builder: (context) => CallPage(
+                        //       roomID: chatID,
+                        //       localUserID: "ID_${userID}",
+                        //       localUserName: UserName.toString(),
+                        //     ),
+                        //   ),
+                        // );
+                      },
+                      child: const Text('Llamada..'),
+                    ),
+                    Text(
+                      formattedTime, // Replace with actual timestamp
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                  ],
                 ),
         ),
       );
@@ -566,10 +610,14 @@ class _MessagesScreenState extends State<MessagesScreen> {
     }
   }
 
-  void jumpToCallPage(BuildContext context,
-      {required String roomID,
-      required String localUserID,
-      required String localUserName}) {
+  void jumpToCallPage(
+    BuildContext context, {
+    required String roomID,
+    required String localUserID,
+    required String localUserName,
+    required String date,
+    required int Organizador,
+  }) {
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -577,6 +625,8 @@ class _MessagesScreenState extends State<MessagesScreen> {
           localUserID: localUserID,
           localUserName: localUserName,
           roomID: roomID,
+          date: date,
+          Organizador: Organizador,
         ),
       ),
     );

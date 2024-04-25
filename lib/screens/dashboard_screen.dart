@@ -27,7 +27,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       return userData['position'];
     }
 
-    return null;
+    return "null";
   }
 
   @override
@@ -117,12 +117,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               children: [
                                 ListTile(
                                   leading: ClipOval(
-                                      child: Image.network(
-                                    userData['imgProfile'],
-                                    width: 43,
-                                    height: 43,
-                                    fit: BoxFit.cover,
-                                  )),
+                                    child: Image.network(
+                                      userData['imgProfile'],
+                                      width: 43,
+                                      height: 43,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
                                   title: Text(
                                     userData['name'],
                                     style: const TextStyle(
@@ -143,8 +144,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                           'chatID': chat['chatID'],
                                           'userID': auth,
                                           'name': userData['name'],
-                                          'userID1': chat['participant1'],
-                                          'userID2': chat['participant2']
                                         });
                                   },
                                 ),
