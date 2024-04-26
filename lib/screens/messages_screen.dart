@@ -323,17 +323,6 @@ class _MessagesScreenState extends State<MessagesScreen> {
                                 text: "Puede volver a llamarlo"),
                           );
                         }
-
-                        // Navigator.push(
-                        //   context,
-                        //   MaterialPageRoute(
-                        //     builder: (context) => CallPage(
-                        //       roomID: chatID,
-                        //       localUserID: "ID_${userID}",
-                        //       localUserName: UserName.toString(),
-                        //     ),
-                        //   ),
-                        // );
                       },
                       child: const Text('Llamada..'),
                     ),
