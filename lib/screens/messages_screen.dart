@@ -286,7 +286,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
           child: isMe
               ? Column(
                   children: [
-                    const Text("Llamadando"),
+                    const Text("Lamando...."),
                     Text(
                       formattedTime, // Replace with actual timestamp
                       style: const TextStyle(fontSize: 12, color: Colors.grey),
