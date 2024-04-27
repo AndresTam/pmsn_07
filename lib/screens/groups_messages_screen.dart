@@ -25,6 +25,7 @@ class _GroupsMessageScreenState extends State<GroupsMessageScreen> {
   VideoPlayerController? _videoPlayerController;
   final Map<String, VideoPlayerController> _videoControllers = {};
   late Stream<List<Map<String, dynamic>>> _messagesStream;
+  late Widget messageWidget;
   File? imageToUpload;
 
   @override
@@ -157,7 +158,7 @@ class _GroupsMessageScreenState extends State<GroupsMessageScreen> {
     DateTime dateTime = DateTime.parse(message['date']);
     DateFormat dateFormat = DateFormat.Hm();
     String formattedTime = dateFormat.format(dateTime);
-    late Widget messageWidget;
+    
     if (message['type'] == 'text') {
       // Mensaje de texto
       messageWidget = Text(

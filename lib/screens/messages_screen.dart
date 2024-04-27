@@ -95,6 +95,8 @@ class _MessagesScreenState extends State<MessagesScreen> {
     _messagesStream = _firestoreMessage.getMessagesStream(args?['chatID']);
     String userID = args?['userID1'];
     String? UserName;
+    print(args);
+
 
     // bool shouldIncludeChat(Map<String, dynamic> messages, String targetChatID) {
     //   return messages['chatID'].contains(targetChatID);

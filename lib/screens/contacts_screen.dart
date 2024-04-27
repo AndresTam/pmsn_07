@@ -231,6 +231,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
                         'chatID': auth+userId,
                         'userID': auth,
                         'name': name,
+                        'userID1': auth,
                     });
                   } else if(exist == 2){
                     Navigator.pushNamed(context, "/messages",
@@ -238,6 +239,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
                         'chatID': userId+auth,
                         'userID': auth,
                         'name': name,
+                        'userID1': auth,
                     });
                   } else if(exist == 2){
                     Navigator.pushNamed(context, "/messages",
@@ -245,6 +247,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
                         'chatID': chatId,
                         'userID': auth,
                         'name': name,
+                        'userID1': auth,
                     });
                   } else {
                     showSnackBar(context, "No se pudo enviar el mensaje");
