@@ -21,13 +21,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final List<String> profesor = ['maestro', 'profesor', 'docente'];
   final List<String> student = ['estudiante', 'alumno'];
 
-  Future<String?> getUserType() async {
-    final userData = await _firestoreUser.getUser(auth);
-    if (userData != null && userData.containsKey('position')) {
-      return userData['position'];
-    }
-
-    return "null";
+  Future<Map<String, dynamic>> _getUserData(String userID) async {
+    Map<String, dynamic>? userData = await _firestoreUser.getUser(userID);
+    return userData ?? {};
   }
 
   @override
@@ -54,11 +50,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 color: Color.fromRGBO(246, 237, 220, 1),
               ), // Icono de suma (+)
               onPressed: () async {
-                final userType = await getUserType();
-                if (profesor.contains(userType!.toLowerCase())) {
+                Map<String, dynamic>? data = await _getUserData(auth);
+                String email = data['email'] as String;
+                RegExp regex = RegExp(r'^[a-zA-Z]+\.[a-zA-Z]+@');
+                if (regex.hasMatch(email)) {
                   _showNewGroupBottomSheet(
                       context); // Mostrar modal para profesor
-                } else if (student.contains(userType.toLowerCase())) {
+                } else {
                   _showNewChatBottomSheet(context); // Mostrar modal para alumno
                 }
               },

@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:pmsn_07/common/call_page.dart';
 import 'package:pmsn_07/services/firestore_calls.dart';
+import 'package:pmsn_07/services/firestore_groups.dart';
 import 'package:pmsn_07/services/firestore_messages.dart';
 import 'package:pmsn_07/services/firestore_user.dart';
 import 'package:pmsn_07/services/storage_service.dart';
@@ -23,6 +24,7 @@ class GroupsMessageScreen extends StatefulWidget {
 
 class _GroupsMessageScreenState extends State<GroupsMessageScreen> {
   final String auth = FirebaseAuth.instance.currentUser!.uid;
+  final FirestoreGroups _firestoreGroups = FirestoreGroups();
   final FirestoreMessage _firestoreMessage = FirestoreMessage();
   final FirestoreUser _firestoreUser = FirestoreUser();
   final FirestoreCalls _firestoreCalls = FirestoreCalls();
@@ -110,35 +112,61 @@ class _GroupsMessageScreenState extends State<GroupsMessageScreen> {
         title: Text(args?['name'] ?? 'HOLA'),
         backgroundColor: const Color.fromRGBO(88, 104, 117, 1),
         actions: [
-          IconButton(
-            onPressed: () async {
-              String? UserName = await _firestoreUser.getUserNameByID(auth);
-              print(
-                  "userID1: ${auth} \n chatID: ${args?['groupID']} \n name:${UserName.toString()}");
-
-              _sendMessage(
-                  args, 'videoCall', "llamada de ${UserName.toString()}");
-              DateTime now2 = DateTime.now();
-              String formattedDateTime2 =
-                  DateFormat('yyyy-MM-dd HH:mm:ss').format(now2);
-              // video call button
-              _firestoreCalls.createCall(
-                args!['groupID'].toString(),
-                "true",
-                auth,
-                UserName.toString(),
-                formattedDateTime2,
-              );
-              jumpToCallPage(
-                context,
-                roomID: args['groupID'].toString(),
-                localUserID: args['userID'].toString(),
-                localUserName: UserName.toString(),
-                date: formattedDateTime2,
-                Organizador: 1,
-              );
-            },
-            icon: const Icon(Icons.phone),
+          Row(
+            children: [
+              IconButton(
+                onPressed: () async {
+                  String? UserName = await _firestoreUser.getUserNameByID(auth);
+                  print("userID1: ${auth} \n chatID: ${args?['groupID']} \n name:${UserName.toString()}");
+              
+                  _sendMessage(
+                      args, 'videoCall', "llamada de ${UserName.toString()}");
+                  DateTime now2 = DateTime.now();
+                  String formattedDateTime2 =
+                      DateFormat('yyyy-MM-dd HH:mm:ss').format(now2);
+                  // video call button
+                  _firestoreCalls.createCall(
+                    args!['groupID'].toString(),
+                    "true",
+                    auth,
+                    UserName.toString(),
+                    formattedDateTime2,
+                  );
+                  jumpToCallPage(
+                    context,
+                    roomID: args['groupID'].toString(),
+                    localUserID: args['userID'].toString(),
+                    localUserName: UserName.toString(),
+                    date: formattedDateTime2,
+                    Organizador: 1,
+                  );
+                },
+                icon: const Icon(Icons.phone),
+              ),
+              IconButton(
+                icon: const Icon(Icons.person_add),
+                onPressed: () async {
+                  Map<String, dynamic>? data = await _getUserData(auth);
+                  String email = data['email'] as String;
+                  RegExp regex = RegExp(r'^[a-zA-Z]+\.[a-zA-Z]+@');
+                  if(regex.hasMatch(email)){
+                    List<String> participantList = await _firestoreGroups.getParticipantsList(args?['groupID']);
+                    Navigator.pushNamed(
+                      context,
+                      "/groupCreation",
+                      arguments: {
+                        'groupId': args?['groupID'],
+                        'name': args?['name'],
+                        'edit': true,
+                        'participantList': participantList,
+                      }
+                    );
+                  } else {
+                    showSnackBar(context, 'Solo los maestros pueden modificar la lista de participantes');
+                  }
+                },
+              )
+            ],
           ),
         ],
       ),

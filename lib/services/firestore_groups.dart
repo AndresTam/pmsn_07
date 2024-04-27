@@ -36,4 +36,36 @@ class FirestoreGroups{
       return [];
     }
   }
+
+  // Método para obtener solo la lista de participantes de un grupo con un ID específico
+  Future<List<String>> getParticipantsList(String groupId) async {
+    try {
+      DocumentSnapshot groupSnapshot = await _groupsCollection.doc(groupId).get();
+      if (groupSnapshot.exists) {
+        Map<String, dynamic>? groupData = groupSnapshot.data() as Map<String, dynamic>?; // Casting de Object? a Map<String, dynamic>?
+        if (groupData != null && groupData.containsKey('participants')) {
+          List<String> participants =
+              (groupData['participants'] as List).cast<String>();
+          return participants;
+        }
+      }
+      print('Group with ID $groupId not found or participants list missing.');
+      return [];
+    } catch (e) {
+      print('Error getting participants list: $e');
+      return [];
+    }
+  }
+
+  // Método para actualizar la lista de participantes de un grupo con un ID específico
+  Future<void> updateParticipantsList(String groupId, List<String> participantList) async {
+    try {
+      await _groupsCollection.doc(groupId).update({
+        'participants': participantList,
+      });
+      print('Participants list updated successfully for group with ID $groupId');
+    } catch (e) {
+      print('Error updating participants list: $e');
+    }
+  }
 }

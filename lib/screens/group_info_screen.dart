@@ -188,7 +188,9 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
                 'name': nameController.text,
                 'asignature': asignatureController.text,
                 'description': descriptionController.text,
-                'image': uploadedImage
+                'image': uploadedImage,
+                'edit': false,
+                'participantList': [] as List<String>,
               }
             );
           }

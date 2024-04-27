@@ -22,6 +22,8 @@ class _GroupCreationScreenState extends State<GroupCreationScreen> {
   @override
   Widget build(BuildContext context) {
     final Map<String, dynamic>? args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    participantsList = args?['participantList'];
+    
     participantsList.remove(auth);
     participantsList.add(auth);
     return Scaffold(
@@ -86,9 +88,14 @@ class _GroupCreationScreenState extends State<GroupCreationScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
-          if (participantsList.length > 1) {
+          if (participantsList.length > 1 && args?['edit'] == false) {
             showSnackBar(context, 'Guardando Datos');
             _firestoreGroups.createGroup(args?['groupId'], args?['name'], args?['asignature'], args?['description'], auth, participantsList, args?['image']);
+            showSnackBar(context, 'Datos Guardados');
+            Navigator.pushNamed(context, "/dash");
+          } else if (participantsList.length > 1 && args?['edit'] == true) {
+            showSnackBar(context, 'Guardando Datos');
+            _firestoreGroups.updateParticipantsList(args?['groupId'], participantsList);
             showSnackBar(context, 'Datos Guardados');
             Navigator.pushNamed(context, "/dash");
           } else {
