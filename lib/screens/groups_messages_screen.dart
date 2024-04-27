@@ -1,12 +1,17 @@
 import 'dart:io';
-import 'package:intl/intl.dart';
+import 'dart:math';
+
+import 'package:art_sweetalert/art_sweetalert.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:pmsn_07/common/call_page.dart';
+import 'package:pmsn_07/services/firestore_calls.dart';
+import 'package:pmsn_07/services/firestore_messages.dart';
+import 'package:pmsn_07/services/firestore_user.dart';
 import 'package:pmsn_07/services/storage_service.dart';
 import 'package:pmsn_07/util/select_file.dart';
 import 'package:pmsn_07/util/snackbar.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:pmsn_07/services/firestore_user.dart';
-import 'package:pmsn_07/services/firestore_messages.dart';
 import 'package:video_player/video_player.dart';
 
 class GroupsMessageScreen extends StatefulWidget {
@@ -20,6 +25,7 @@ class _GroupsMessageScreenState extends State<GroupsMessageScreen> {
   final String auth = FirebaseAuth.instance.currentUser!.uid;
   final FirestoreMessage _firestoreMessage = FirestoreMessage();
   final FirestoreUser _firestoreUser = FirestoreUser();
+  final FirestoreCalls _firestoreCalls = FirestoreCalls();
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   VideoPlayerController? _videoPlayerController;
@@ -33,7 +39,7 @@ class _GroupsMessageScreenState extends State<GroupsMessageScreen> {
     super.initState();
   }
 
-   @override
+  @override
   void dispose() {
     _messageController.dispose();
     _scrollController.dispose();
@@ -49,14 +55,15 @@ class _GroupsMessageScreenState extends State<GroupsMessageScreen> {
     if (messageText.isNotEmpty) {
       DateTime now = DateTime.now();
       String formattedDateTime = DateFormat('yyyy-MM-dd HH:mm:ss').format(now);
-      _firestoreMessage.createMessage(args?['groupID'], messageText, auth, formattedDateTime, type);
+      _firestoreMessage.createMessage(
+          args?['groupID'], messageText, auth, formattedDateTime, type);
       _messageController.clear();
       FocusScope.of(context).unfocus();
       _scrollToBottom(0);
       setState(() {});
     }
   }
-  
+
   void _scrollToBottom(int length) {
     if (_scrollController.hasClients) {
       _scrollController.animateTo(
@@ -94,13 +101,46 @@ class _GroupsMessageScreenState extends State<GroupsMessageScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final Map<String, dynamic>? args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    final Map<String, dynamic>? args =
+        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
     _messagesStream = _firestoreMessage.getMessagesStream(args?['groupID']);
 
     return Scaffold(
       appBar: AppBar(
         title: Text(args?['name'] ?? 'HOLA'),
         backgroundColor: const Color.fromRGBO(88, 104, 117, 1),
+        actions: [
+          IconButton(
+            onPressed: () async {
+              String? UserName = await _firestoreUser.getUserNameByID(auth);
+              print(
+                  "userID1: ${auth} \n chatID: ${args?['groupID']} \n name:${UserName.toString()}");
+
+              _sendMessage(
+                  args, 'videoCall', "llamada de ${UserName.toString()}");
+              DateTime now2 = DateTime.now();
+              String formattedDateTime2 =
+                  DateFormat('yyyy-MM-dd HH:mm:ss').format(now2);
+              // video call button
+              _firestoreCalls.createCall(
+                args!['groupID'].toString(),
+                "true",
+                auth,
+                UserName.toString(),
+                formattedDateTime2,
+              );
+              jumpToCallPage(
+                context,
+                roomID: args['groupID'].toString(),
+                localUserID: args['userID'].toString(),
+                localUserName: UserName.toString(),
+                date: formattedDateTime2,
+                Organizador: 1,
+              );
+            },
+            icon: const Icon(Icons.phone),
+          ),
+        ],
       ),
       body: Container(
         color: const Color.fromRGBO(88, 104, 117, 1),
@@ -109,7 +149,8 @@ class _GroupsMessageScreenState extends State<GroupsMessageScreen> {
             Expanded(
               child: StreamBuilder<List<Map<String, dynamic>>>(
                 stream: _messagesStream,
-                builder: (BuildContext context, AsyncSnapshot<List<Map<String, dynamic>>> snapshot) {
+                builder: (BuildContext context,
+                    AsyncSnapshot<List<Map<String, dynamic>>> snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
                   } else if (snapshot.hasError) {
@@ -119,14 +160,16 @@ class _GroupsMessageScreenState extends State<GroupsMessageScreen> {
                     messagesList.sort((a, b) => b['date'].compareTo(a['date']));
                     return ListView.builder(
                       controller: _scrollController,
-                      reverse: true, // Mostrar los mensajes más recientes al final
+                      reverse:
+                          true, // Mostrar los mensajes más recientes al final
                       itemCount: messagesList.length,
                       itemBuilder: (BuildContext context, int index) {
                         final message = messagesList[index];
                         return FutureBuilder<Map<String, dynamic>>(
                           future: _getUserData(message['sender']),
                           builder: (context, userSnapshot) {
-                            if (userSnapshot.connectionState == ConnectionState.waiting) {
+                            if (userSnapshot.connectionState ==
+                                ConnectionState.waiting) {
                               return const ListTile(
                                 title: Text('Loading...'),
                               );
@@ -134,7 +177,13 @@ class _GroupsMessageScreenState extends State<GroupsMessageScreen> {
                             if (userSnapshot.hasData) {
                               final userData = userSnapshot.data!;
                               final bool isMe = message['sender'] == auth;
-                              return _buildMessage(message, userData, isMe);
+                              return _buildMessage(
+                                message,
+                                userData,
+                                isMe,
+                                args?['groupID'],
+                                message['sender'],
+                              );
                             }
                             return const ListTile(
                               title: Text('User Not Found'),
@@ -154,7 +203,8 @@ class _GroupsMessageScreenState extends State<GroupsMessageScreen> {
     );
   }
 
-  Widget _buildMessage(Map<String, dynamic> message, Map<String, dynamic> userData, bool isMe) {
+  Widget _buildMessage(Map<String, dynamic> message,
+      Map<String, dynamic> userData, bool isMe, String gropuID, String userID) {
     DateTime dateTime = DateTime.parse(message['date']);
     DateFormat dateFormat = DateFormat.Hm();
     String formattedTime = dateFormat.format(dateTime);
@@ -182,6 +232,42 @@ class _GroupsMessageScreenState extends State<GroupsMessageScreen> {
         borderRadius: BorderRadius.circular(10.0),
         child: _buildVideoMessage(message['message'], isMe),
       );
+    } else if (message['type'] == 'videoCall') {
+      messageWidget = isMe
+          ? Text('Llamando')
+          : ElevatedButton(
+              onPressed: () async {
+                String? UserName =
+                    await _firestoreUser.getUserNameByID(userID.toString());
+                String? CallEnable = await _firestoreCalls.getCallEnable(
+                    gropuID.toString(), message['date'].toString());
+                String IDrandom = Random().nextInt(100000).toString();
+
+                print("${CallEnable}  ${CallEnable}");
+                print(
+                    "callID: ${gropuID}\n userID1: ${userID} \n username: ${UserName}");
+
+                if (CallEnable == 'true') {
+                  jumpToCallPage(
+                    context,
+                    roomID: gropuID,
+                    localUserID: "ID_${IDrandom}_${userID}",
+                    localUserName: UserName.toString(),
+                    date: message['date'].toString(),
+                    Organizador: 0,
+                  );
+                } else {
+                  ArtSweetAlert.show(
+                    context: context,
+                    artDialogArgs: ArtDialogArgs(
+                        type: ArtSweetAlertType.info,
+                        title: "Llamada ya finalizada.....",
+                        text: "Puede volver a llamarlo"),
+                  );
+                }
+              },
+              child: const Text('Llamada..'),
+            );
     }
     final messageContent = Container(
       decoration: BoxDecoration(
@@ -190,7 +276,8 @@ class _GroupsMessageScreenState extends State<GroupsMessageScreen> {
       ),
       padding: const EdgeInsets.all(12.0),
       child: Column(
-        crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        crossAxisAlignment:
+            isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
         children: [
           if (!isMe)
             Text(
@@ -289,14 +376,14 @@ class _GroupsMessageScreenState extends State<GroupsMessageScreen> {
               },
             ),
             IconButton(
-              icon: const Icon(
-                Icons.send,
-                color: Color.fromRGBO(246, 237, 220, 1),
-              ),
-              onPressed: () =>{
-                 _sendMessage(args, 'text', _messageController.text.trim()),
-              }
-            ),
+                icon: const Icon(
+                  Icons.send,
+                  color: Color.fromRGBO(246, 237, 220, 1),
+                ),
+                onPressed: () => {
+                      _sendMessage(
+                          args, 'text', _messageController.text.trim()),
+                    }),
           ],
         ),
       ),
@@ -391,6 +478,7 @@ class _GroupsMessageScreenState extends State<GroupsMessageScreen> {
       },
     );
   }
+
   Future<void> _showImageDialog(
       BuildContext context, Map<String, dynamic>? args, String type) async {
     if (imageToUpload != null && type == 'image') {
@@ -443,53 +531,74 @@ class _GroupsMessageScreenState extends State<GroupsMessageScreen> {
         });
       if (_videoPlayerController != null) {
         return showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: const Text('Video'),
-              content: AspectRatio(
-                aspectRatio: _videoPlayerController!.value.aspectRatio,
-                child: VideoPlayer(_videoPlayerController!),
-              ),
-              backgroundColor: const Color.fromRGBO(189, 214, 210, 1),
-              actions: <Widget>[
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    TextButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                      child: const Text('Cerrar'),
-                    ),
-                    TextButton(
-                      onPressed: () async {
-                        showSnackBar(context, 'Enviando Archivo');
-                        final String fileName =
-                            imageToUpload!.path.split("/").last;
-                        final uploadedImage = await uploadChatVideo(
-                            imageToUpload!,
-                            'chats',
-                            args?['groupID'],
-                            fileName);
-                        if (uploadedImage.isNotEmpty) {
-                          _sendMessage(args, 'video', uploadedImage);
-                          showSnackBar(context, 'Archivo Enviado');
-                          Navigator.of(context).pop();
-                        } else {
-                          showSnackBar(context, 'Ocurrio algún fallo');
-                          Navigator.of(context).pop();
-                        }
-                      },
-                      child: const Text('Enviar'),
-                    ),
-                  ],
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: const Text('Video'),
+                content: AspectRatio(
+                  aspectRatio: _videoPlayerController!.value.aspectRatio,
+                  child: VideoPlayer(_videoPlayerController!),
                 ),
-              ],
-            );
-          }
-        );
+                backgroundColor: const Color.fromRGBO(189, 214, 210, 1),
+                actions: <Widget>[
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                        child: const Text('Cerrar'),
+                      ),
+                      TextButton(
+                        onPressed: () async {
+                          showSnackBar(context, 'Enviando Archivo');
+                          final String fileName =
+                              imageToUpload!.path.split("/").last;
+                          final uploadedImage = await uploadChatVideo(
+                              imageToUpload!,
+                              'chats',
+                              args?['groupID'],
+                              fileName);
+                          if (uploadedImage.isNotEmpty) {
+                            _sendMessage(args, 'video', uploadedImage);
+                            showSnackBar(context, 'Archivo Enviado');
+                            Navigator.of(context).pop();
+                          } else {
+                            showSnackBar(context, 'Ocurrio algún fallo');
+                            Navigator.of(context).pop();
+                          }
+                        },
+                        child: const Text('Enviar'),
+                      ),
+                    ],
+                  ),
+                ],
+              );
+            });
       }
     }
+  }
+
+  void jumpToCallPage(
+    BuildContext context, {
+    required String roomID,
+    required String localUserID,
+    required String localUserName,
+    required String date,
+    required int Organizador,
+  }) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CallPage(
+          localUserID: localUserID,
+          localUserName: localUserName,
+          roomID: roomID,
+          date: date,
+          Organizador: Organizador,
+        ),
+      ),
+    );
   }
 }

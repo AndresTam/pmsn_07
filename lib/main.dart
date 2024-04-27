@@ -15,6 +15,7 @@ import 'package:pmsn_07/screens/profile_registration.dart';
 import 'package:pmsn_07/screens/settings_screeen.dart';
 import 'package:pmsn_07/screens/singup_screen.dart';
 import 'package:pmsn_07/screens/splash_screen.dart';
+import 'package:pmsn_07/utils/permission.dart';
 import 'package:zego_express_engine/zego_express_engine.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -34,6 +35,7 @@ void main() async {
       appSign: Statics.appSign,
     ),
   );
+  requestPermission();
 
   runApp(const MyApp());
 }
