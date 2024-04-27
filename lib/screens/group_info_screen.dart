@@ -190,7 +190,7 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
                 'description': descriptionController.text,
                 'image': uploadedImage,
                 'edit': false,
-                'participantList': [] as List<String>,
+                'participantList': [],
               }
             );
           }

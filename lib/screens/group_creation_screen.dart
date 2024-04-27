@@ -19,11 +19,17 @@ class _GroupCreationScreenState extends State<GroupCreationScreen> {
   final String auth = FirebaseAuth.instance.currentUser!.uid;
   final TextEditingController emailController = TextEditingController();
   List<String> participantsList = [];
+  int count = 0;
   @override
   Widget build(BuildContext context) {
     final Map<String, dynamic>? args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-    participantsList = args?['participantList'];
-    
+    if(args?['edit'] == false && count == 0){
+      List<dynamic>? participantsDynamicList = args?['participantList']; // Lista dinámica
+      participantsList = participantsDynamicList?.map((participant) => participant.toString()).toList() ?? [];
+      count = 1;
+    } else if(args?['edit'] == true){
+      participantsList = args?['participantList'];
+    }
     participantsList.remove(auth);
     participantsList.add(auth);
     return Scaffold(
